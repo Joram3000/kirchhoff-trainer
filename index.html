@@ -85,8 +85,8 @@ h1,h2,h3{font-family:'Sora',sans-serif; margin:0;}
 .circuit-card.accent-mixed{--accent:var(--accent-mixed);}
 .arrow-fill-neutral{fill:var(--wire);}
 .arrow-fill-accent{fill:var(--accent, var(--accent-kcl));}
-.arrow-neutral line{stroke:var(--wire);}
-.arrow-accent line{stroke:var(--accent);}
+.arrow-neutral line{stroke:var(--wire); stroke-width:3; stroke-linecap:round;}
+.arrow-accent line{stroke:var(--accent); stroke-width:3; stroke-linecap:round;}
 
 .question-card{display:flex; flex-direction:column; gap:14px; min-width:0;}
 .law-chip{display:inline-flex; align-self:flex-start; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-family:'IBM Plex Mono',monospace; font-size:.72rem; font-weight:600; letter-spacing:.02em;}
@@ -153,10 +153,10 @@ footer{text-align:center; color:var(--text-dim); font-size:.76rem; padding-top:8
       <div class="circuit-caption" id="circuitCaption">Schema</div>
       <svg id="circuitSvg" viewBox="0 0 380 300" role="img" aria-label="Schakelschema">
         <defs>
-          <marker id="arrowhead-neutral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <marker id="arrowhead-neutral" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 Z" class="arrow-fill-neutral"></path>
           </marker>
-          <marker id="arrowhead-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <marker id="arrowhead-accent" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 Z" class="arrow-fill-accent"></path>
           </marker>
         </defs>
@@ -219,6 +219,12 @@ footer{text-align:center; color:var(--text-dim); font-size:.76rem; padding-top:8
       <div class="formula">i<sub>k</sub> = i<sub>s</sub> · R<sub>parallel</sub> / R<sub>k</sub></div>
       <p>Bij de knooppuntspanningsmethode schrijf je in elk knooppunt de KCL-vergelijking op in termen van de onbekende knooppuntspanningen en los je het stelsel op.</p>
     </div>
+    <div class="card">
+      <h3>Een spannings- én een stroombron samen</h3>
+      <p><b>In serie</b> met een weerstand: de stroombron legt de stroom op voor de héle lus. Dus I = I<sub>s</sub> — de waarde van R en V<sub>s</sub> doen er voor de stroom niet toe. Gebruik daarna Ohm en KVL om de rest te vinden.</p>
+      <p><b>Parallel</b> met een weerstand: de spanningsbron legt de spanning op voor de héle combinatie. Dus v = V<sub>s</sub> — de waarde van R en I<sub>s</sub> doen er voor die spanning niet toe. Gebruik daarna Ohm en KCL om de rest te vinden.</p>
+      <p>Dit is precies waarom deze sommen lastig aanvoelen: je moet eerst herkennen wélke bron de stroom of spanning al vastlegt, vóór je gaat rekenen.</p>
+    </div>
   </section>
 
   <footer>Alle oefeningen worden willekeurig gegenereerd — klik op "Volgende opgave" voor een nieuwe versie.</footer>
@@ -258,11 +264,13 @@ function batteryV(cx,cy,plusAt){
     `<text class="sign" x="${cx+16}" y="${yTop-3}" text-anchor="start">${topIsPlus?'+':'−'}</text>`+
     `<text class="sign" x="${cx+16}" y="${yBot+13}" text-anchor="start">${topIsPlus?'−':'+'}</text>`;
 }
-function currentSourceSymbol(cx,cy,r,arrowUp){
-  const y1 = arrowUp? cy+r*0.55 : cy-r*0.55;
-  const y2 = arrowUp? cy-r*0.55 : cy+r*0.55;
+function currentSourceSymbol(cx,cy,r,arrowUp,accent){
+  const y1 = arrowUp? cy+r*0.68 : cy-r*0.68;
+  const y2 = arrowUp? cy-r*0.68 : cy+r*0.68;
+  const cls = accent? 'arrow-accent':'arrow-neutral';
+  const markerId = accent? 'arrowhead-accent':'arrowhead-neutral';
   return `<circle class="comp" cx="${cx}" cy="${cy}" r="${r}"/>`+
-    `<g class="arrow-neutral"><line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}" marker-end="url(#arrowhead-neutral)"/></g>`;
+    `<g class="${cls}"><line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}" marker-end="url(#${markerId})"/></g>`;
 }
 function groundSymbol(cx,railY){
   const s=railY+12;
@@ -290,7 +298,7 @@ function svgKCLNode(branches){
     const angle = b.dir==='out'? outAngle[b.pos] : (outAngle[b.pos]+180)%360;
     const arrowCls = b.isUnknown? 'arrow-accent':'arrow-neutral';
     const markerId = b.isUnknown? 'arrowhead-accent':'arrowhead-neutral';
-    arrows += `<g class="${arrowCls}" transform="translate(${g.arrow[0]},${g.arrow[1]}) rotate(${angle})"><line x1="-10" y1="0" x2="10" y2="0" marker-end="url(#${markerId})"/></g>`;
+    arrows += `<g class="${arrowCls}" transform="translate(${g.arrow[0]},${g.arrow[1]}) rotate(${angle})"><line x1="-14" y1="0" x2="14" y2="0" marker-end="url(#${markerId})"/></g>`;
     const dy = g.anchor==='middle' ? '' : ' dy=".35em"';
     const labelText = b.isUnknown ? `i<tspan baseline-shift="sub" font-size="9">x</tspan> = ?` : `i<tspan baseline-shift="sub" font-size="9">${b.letter}</tspan> = ${fmt(b.value)} A`;
     labels += `<text class="${b.isUnknown?'lbl-unknown':'lbl'}" x="${g.labelPos[0]}" y="${g.labelPos[1]}" text-anchor="${g.anchor}"${dy}>${labelText}</text>`;
@@ -402,7 +410,7 @@ function svgSeries(p){
   out += resistorV(right, 145, rw, rh);
   out += `<text class="lbl" x="${right+16}" y="145" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
   out += `<line class="wire" x1="${right}" y1="${bottom}" x2="${left}" y2="${bottom}"/>`;
-  out += `<g class="arrow-neutral" transform="translate(190,${bottom}) rotate(180)"><line x1="-10" y1="0" x2="10" y2="0" marker-end="url(#arrowhead-neutral)"/></g>`;
+  out += `<g class="arrow-neutral" transform="translate(190,${bottom}) rotate(180)"><line x1="-14" y1="0" x2="14" y2="0" marker-end="url(#arrowhead-neutral)"/></g>`;
   out += `<text class="lbl" x="190" y="${bottom-14}" text-anchor="middle">I</text>`;
   out += `<line class="wire" x1="${left}" y1="${bottom}" x2="${left}" y2="${145+bg}"/>`;
   out += `<line class="wire" x1="${left}" y1="${145-bg}" x2="${left}" y2="${top}"/>`;
@@ -412,7 +420,7 @@ function svgSeries(p){
   return out;
 }
 function genSeries(){
-  const I=rnd(1,6), R1=rnd(2,20), R2=rnd(2,20);
+  const I=rnd(1,4), R1=rnd(2,12), R2=rnd(2,12);
   const Vs=I*(R1+R2);
   const v2=round2(I*R2), P1=round2(I*I*R1);
   const variants=[
@@ -442,7 +450,7 @@ function svgParallel(p){
   out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xIs}" y2="${140-24}"/>`;
   out += `<line class="wire" x1="${xIs}" y1="${140+24}" x2="${xIs}" y2="${bottom}"/>`;
   out += currentSourceSymbol(xIs,140,20,true);
-  out += `<text class="lbl" x="${xIs-30}" y="140" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
+  out += `<text class="lbl" x="${xIs-20}" y="140" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
   out += `<line class="wire" x1="${xR1}" y1="${top}" x2="${xR1}" y2="${140-rw/2}"/>`;
   out += `<line class="wire" x1="${xR1}" y1="${140+rw/2}" x2="${xR1}" y2="${bottom}"/>`;
   out += resistorV(xR1,140,rw,rh);
@@ -540,7 +548,7 @@ function svgNodeVoltage(p){
   out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xIs}" y2="${150-24}"/>`;
   out += `<line class="wire" x1="${xIs}" y1="${150+24}" x2="${xIs}" y2="${bottom}"/>`;
   out += currentSourceSymbol(xIs,150,20,true);
-  out += `<text class="lbl" x="${xIs-30}" y="150" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
+  out += `<text class="lbl" x="${xIs-20}" y="150" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
   out += `<line class="wire" x1="${xR1}" y1="${top}" x2="${xR1}" y2="${150-rw/2}"/>`;
   out += `<line class="wire" x1="${xR1}" y1="${150+rw/2}" x2="${xR1}" y2="${bottom}"/>`;
   out += resistorV(xR1,150,rw,rh);
@@ -571,12 +579,103 @@ function genNodeVoltage(){
   };
 }
 
+/* ---------- Generator 7: Bronnen in serie (V + I) ---------- */
+function svgSeriesVI(p){
+  const top=60, bottom=230, left=90, right=290, rw=80, rh=18, bg=11;
+  let out='';
+  out += `<line class="wire" x1="${left}" y1="${top}" x2="${190-rw/2}" y2="${top}"/>`;
+  out += `<line class="wire" x1="${190+rw/2}" y1="${top}" x2="${right}" y2="${top}"/>`;
+  out += resistorH(190, top, rw, rh);
+  out += `<text class="lbl" x="190" y="${top-18}" text-anchor="middle">R = ${fmt(p.R)} Ω</text>`;
+  out += `<line class="wire" x1="${right}" y1="${top}" x2="${right}" y2="${145-24}"/>`;
+  out += `<line class="wire" x1="${right}" y1="${145+24}" x2="${right}" y2="${bottom}"/>`;
+  out += currentSourceSymbol(right,145,20,false);
+  out += `<text class="lbl" x="${right+28}" y="145" text-anchor="start" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
+  out += `<line class="wire" x1="${right}" y1="${bottom}" x2="${left}" y2="${bottom}"/>`;
+  out += `<g class="arrow-accent" transform="translate(190,${bottom}) rotate(180)"><line x1="-14" y1="0" x2="14" y2="0" marker-end="url(#arrowhead-accent)"/></g>`;
+  out += `<text class="lbl-unknown" x="190" y="${bottom-16}" text-anchor="middle">I = I<tspan baseline-shift="sub" font-size="9">s</tspan></text>`;
+  out += `<line class="wire" x1="${left}" y1="${bottom}" x2="${left}" y2="${145+bg}"/>`;
+  out += `<line class="wire" x1="${left}" y1="${145-bg}" x2="${left}" y2="${top}"/>`;
+  out += batteryV(left,145,'top');
+  out += `<text class="lbl" x="${left-18}" y="145" text-anchor="end" dy=".35em">V<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Vs)} V</text>`;
+  out += [[left,top],[right,top],[right,bottom],[left,bottom]].map(pt=>dot(pt[0],pt[1])).join('');
+  return out;
+}
+function genSeriesVI(){
+  const Is=rnd(2,10), R=rnd(2,30), Vs=rnd(10,60);
+  const vR = round2(Is*R);
+  const vx = round2(Vs-vR);
+  const variants=[
+    {q:`Bereken de stroom door de spanningsbron V<sub>s</sub>.`, unit:'A', answer:Is},
+    {q:`Bereken de spanning v<sub>R</sub> over de weerstand R.`, unit:'V', answer:vR},
+    {q:`Bereken de spanning v<sub>x</sub> over de stroombron (via KVL).`, unit:'V', answer:vx},
+  ];
+  const q = pick(variants);
+  const steps=[
+    `Belangrijk inzicht: in een serieschakeling loopt overal dezelfde stroom. Een stroombron legt zijn eigen stroom op, dus geldt: I = I<sub>s</sub> = ${fmt(Is)} A — ongeacht de waarden van R en V<sub>s</sub>!`,
+    `Met de wet van Ohm: v<sub>R</sub> = I·R = ${fmt(Is)} × ${fmt(R)} = ${fmt(vR)} V.`,
+    `Met KVL rond de lus: V<sub>s</sub> − v<sub>R</sub> − v<sub>x</sub> = 0  →  v<sub>x</sub> = ${fmt(Vs)} − ${fmt(vR)} = ${fmt(vx)} V.`,
+    `Dus het gevraagde antwoord is ${fmt(q.answer)} ${q.unit}.`,
+  ];
+  return {
+    accent:'mixed', title:'Bronnen in serie (V + I)', question:q.q, unit:q.unit, answer:q.answer,
+    tolerance:Math.max(0.05, Math.abs(q.answer)*0.02), steps, svg: svgSeriesVI({Vs,R,Is})
+  };
+}
+
+/* ---------- Generator 8: Bronnen in parallel (V + I) ---------- */
+function svgParallelVI(p){
+  const top=60, bottom=220, xVs=90, xR=195, xIs=290, rw=80, rh=18, bg=11;
+  let out='';
+  out += `<line class="wire" x1="${xVs}" y1="${top}" x2="${xIs}" y2="${top}"/>`;
+  out += `<line class="wire" x1="${xVs}" y1="${bottom}" x2="${xIs}" y2="${bottom}"/>`;
+  [xVs,xR,xIs].forEach(x=>{ out+=dot(x,top)+dot(x,bottom); });
+  out += `<line class="wire" x1="${xVs}" y1="${top}" x2="${xVs}" y2="${140-bg}"/>`;
+  out += `<line class="wire" x1="${xVs}" y1="${140+bg}" x2="${xVs}" y2="${bottom}"/>`;
+  out += batteryV(xVs,140,'top');
+  out += `<text class="lbl" x="${xVs-20}" y="140" text-anchor="end" dy=".35em">V<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Vs)} V</text>`;
+  out += `<line class="wire" x1="${xR}" y1="${top}" x2="${xR}" y2="${140-rw/2}"/>`;
+  out += `<line class="wire" x1="${xR}" y1="${140+rw/2}" x2="${xR}" y2="${bottom}"/>`;
+  out += resistorV(xR,140,rw,rh);
+  out += `<text class="lbl" x="${xR+16}" y="140" text-anchor="start" dy=".35em">R = ${fmt(p.R)} Ω</text>`;
+  out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xIs}" y2="${140-24}"/>`;
+  out += `<line class="wire" x1="${xIs}" y1="${140+24}" x2="${xIs}" y2="${bottom}"/>`;
+  out += currentSourceSymbol(xIs,140,20,true);
+  out += `<text class="lbl" x="${xIs+28}" y="140" text-anchor="start" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
+  out += `<text class="lbl-unknown" x="${(xVs+xIs)/2}" y="${top-14}" text-anchor="middle">v = V<tspan baseline-shift="sub" font-size="9">s</tspan></text>`;
+  out += groundSymbol(195, bottom);
+  return out;
+}
+function genParallelVI(){
+  const Vs=rnd(10,60), R=rnd(2,30), Is=rnd(2,15);
+  const iR = round2(Vs/R);
+  const iVs = round2(Is-iR);
+  const variants=[
+    {q:`Bereken de spanning over de weerstand R (dat is ook de spanning van de bron).`, unit:'V', answer:Vs},
+    {q:`Bereken de stroom i<sub>R</sub> door de weerstand R.`, unit:'A', answer:iR},
+    {q:`Bereken de stroom i<sub>v</sub> door de spanningsbron V<sub>s</sub> (via KCL).`, unit:'A', answer:iVs},
+  ];
+  const q = pick(variants);
+  const steps=[
+    `Belangrijk inzicht: in een parallelschakeling staat overal dezelfde spanning. Een spanningsbron legt zijn eigen spanning op, dus geldt: v = V<sub>s</sub> = ${fmt(Vs)} V — ongeacht de waarden van R en I<sub>s</sub>!`,
+    `Met de wet van Ohm: i<sub>R</sub> = v/R = ${fmt(Vs)} / ${fmt(R)} = ${fmt(iR)} A.`,
+    `Met KCL in het bovenste knooppunt: I<sub>s</sub> = i<sub>R</sub> + i<sub>v</sub>  →  i<sub>v</sub> = I<sub>s</sub> − i<sub>R</sub> = ${fmt(Is)} − ${fmt(iR)} = ${fmt(iVs)} A.`,
+    `Dus het gevraagde antwoord is ${fmt(q.answer)} ${q.unit}.`,
+  ];
+  return {
+    accent:'mixed', title:'Bronnen in parallel (V + I)', question:q.q, unit:q.unit, answer:q.answer,
+    tolerance:Math.max(0.05, Math.abs(q.answer)*0.02), steps, svg: svgParallelVI({Vs,R,Is})
+  };
+}
+
 /* ---------- App ---------- */
 const CATEGORIES=[
   {id:'kcl-node', label:'KCL bij een knooppunt', accent:'kcl', gen:genKCLNode},
   {id:'kvl-loop', label:'KVL in een lus', accent:'kvl', gen:genKVLLoop},
   {id:'series', label:'Serieschakeling', accent:'kvl', gen:genSeries},
   {id:'parallel', label:'Parallelschakeling', accent:'kcl', gen:genParallel},
+  {id:'series-vi', label:'Bronnen in serie (V + I)', accent:'mixed', gen:genSeriesVI},
+  {id:'parallel-vi', label:'Bronnen in parallel (V + I)', accent:'mixed', gen:genParallelVI},
   {id:'mixed', label:'Gemengde schakeling', accent:'mixed', gen:genMixed},
   {id:'nodevoltage', label:'Knooppuntspanning', accent:'kcl', gen:genNodeVoltage},
 ];
