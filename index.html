@@ -1,0 +1,731 @@
+<title>Kirchhoff Trainer</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f5f6fa; --surface:#ffffff; --surface-2:#eef1f7; --border:rgba(20,26,46,.10);
+  --text:#141a2e; --text-dim:#5c6478;
+  --brand:#b45309; --brand-soft:#fdecd2; --brand-contrast:#ffffff;
+  --accent-kcl:#16a34a; --accent-kcl-soft:#dcfce7;
+  --accent-kvl:#1d4ed8; --accent-kvl-soft:#dbeafe;
+  --accent-mixed:#7c3aed; --accent-mixed-soft:#ede9fe;
+  --good:#15803d; --bad:#dc2626; --wire:#1e2333;
+  --shadow:0 1px 2px rgba(20,26,46,.06),0 10px 26px -14px rgba(20,26,46,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0e1a; --surface:#111729; --surface-2:#171f38; --border:rgba(255,255,255,.09);
+    --text:#e8ecf7; --text-dim:#8f9ac0;
+    --brand:#f5a524; --brand-soft:rgba(245,165,36,.14); --brand-contrast:#1a1206;
+    --accent-kcl:#4ade80; --accent-kcl-soft:rgba(74,222,128,.14);
+    --accent-kvl:#60a5fa; --accent-kvl-soft:rgba(96,165,250,.14);
+    --accent-mixed:#c084fc; --accent-mixed-soft:rgba(192,132,252,.14);
+    --good:#4ade80; --bad:#f87171; --wire:#c7cfe6;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a0e1a; --surface:#111729; --surface-2:#171f38; --border:rgba(255,255,255,.09);
+  --text:#e8ecf7; --text-dim:#8f9ac0;
+  --brand:#f5a524; --brand-soft:rgba(245,165,36,.14); --brand-contrast:#1a1206;
+  --accent-kcl:#4ade80; --accent-kcl-soft:rgba(74,222,128,.14);
+  --accent-kvl:#60a5fa; --accent-kvl-soft:rgba(96,165,250,.14);
+  --accent-mixed:#c084fc; --accent-mixed-soft:rgba(192,132,252,.14);
+  --good:#4ade80; --bad:#f87171; --wire:#c7cfe6;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px -16px rgba(0,0,0,.65);
+}
+*{box-sizing:border-box;}
+body{background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',sans-serif; margin:0; padding:20px 16px 48px; display:flex; justify-content:center;}
+.app{width:100%; max-width:980px; display:flex; flex-direction:column; gap:16px;}
+h1,h2,h3{font-family:'Sora',sans-serif; margin:0;}
+.hidden{display:none!important;}
+
+.app-header{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+.brand{display:flex; align-items:center; gap:12px;}
+.brand h1{font-size:1.35rem; letter-spacing:-.01em;}
+.subtitle{margin:2px 0 0; color:var(--text-dim); font-size:.85rem;}
+.header-actions{display:flex; gap:8px; flex-wrap:wrap;}
+
+.ghost-btn{background:transparent; border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:.82rem; font-weight:500; padding:8px 14px; border-radius:10px; cursor:pointer;}
+.ghost-btn:hover{border-color:var(--brand); color:var(--brand);}
+.ghost-btn.subtle{color:var(--text-dim); font-size:.78rem;}
+.ghost-btn.active{background:var(--brand-soft); border-color:var(--brand); color:var(--brand);}
+
+.tabs{display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; min-width:0;}
+.tab-btn{flex:0 0 auto; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); color:var(--text); font-family:'IBM Plex Sans',sans-serif; font-size:.82rem; font-weight:500; padding:9px 14px; border-radius:999px; cursor:pointer; white-space:nowrap;}
+.tab-btn:hover{border-color:var(--text-dim);}
+.tab-btn.active{background:var(--text); color:var(--bg); border-color:var(--text);}
+.tab-dot{width:8px; height:8px; border-radius:50%; flex:0 0 auto;}
+.tab-dot.kcl{background:var(--accent-kcl);} .tab-dot.kvl{background:var(--accent-kvl);} .tab-dot.mixed{background:var(--accent-mixed);}
+.tab-badge{font-family:'IBM Plex Mono',monospace; font-size:.72rem; opacity:.7;}
+
+.legend{display:flex; align-items:center; gap:18px; color:var(--text-dim); font-size:.78rem; margin:0; flex-wrap:wrap;}
+.legend-dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px;}
+.legend-dot.kcl{background:var(--accent-kcl);} .legend-dot.kvl{background:var(--accent-kvl);} .legend-dot.mixed{background:var(--accent-mixed);}
+
+.layout{display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:18px; align-items:start; min-width:0;}
+@media (max-width:800px){ .layout{grid-template-columns:minmax(0,1fr);} }
+
+.card{background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:20px; min-width:0;}
+.circuit-card{display:flex; flex-direction:column; gap:10px; min-width:0;}
+.circuit-caption{font-size:.78rem; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em;}
+.circuit-card svg{width:100%; height:auto; display:block;}
+.circuit-card .wire{stroke:var(--wire); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+.circuit-card .comp{stroke:var(--wire); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+.circuit-card .node-dot{fill:var(--wire);}
+.circuit-card text{font-family:'IBM Plex Mono',monospace; font-size:12px; fill:var(--text);}
+.circuit-card .lbl-unknown{fill:var(--accent); font-weight:600; font-size:13px;}
+.circuit-card .sign{font-weight:700; font-size:14px; fill:var(--text);}
+.circuit-card .sign-accent{font-weight:700; font-size:15px; fill:var(--accent);}
+.circuit-card .hint{fill:var(--text-dim); font-size:10px; font-family:'IBM Plex Sans',sans-serif;}
+.circuit-card .plate-long{stroke:var(--wire); stroke-width:2.5;}
+.circuit-card .plate-short{stroke:var(--wire); stroke-width:5;}
+.circuit-card.accent-kcl{--accent:var(--accent-kcl);}
+.circuit-card.accent-kvl{--accent:var(--accent-kvl);}
+.circuit-card.accent-mixed{--accent:var(--accent-mixed);}
+.arrow-fill-neutral{fill:var(--wire);}
+.arrow-fill-accent{fill:var(--accent, var(--accent-kcl));}
+.arrow-neutral line{stroke:var(--wire);}
+.arrow-accent line{stroke:var(--accent);}
+
+.question-card{display:flex; flex-direction:column; gap:14px; min-width:0;}
+.law-chip{display:inline-flex; align-self:flex-start; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; font-family:'IBM Plex Mono',monospace; font-size:.72rem; font-weight:600; letter-spacing:.02em;}
+.law-kcl{background:var(--accent-kcl-soft); color:var(--accent-kcl);}
+.law-kvl{background:var(--accent-kvl-soft); color:var(--accent-kvl);}
+.law-mixed{background:var(--accent-mixed-soft); color:var(--accent-mixed);}
+.question-text{font-size:1rem; line-height:1.5; margin:0;}
+.question-text sub{font-size:.72em;}
+
+.answer-row{display:flex; align-items:stretch; gap:8px; flex-wrap:wrap;}
+#answerInput{flex:1 1 120px; min-width:0; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:11px 12px; font-family:'IBM Plex Mono',monospace; font-size:1rem; color:var(--text);}
+#answerInput:focus{outline:2px solid var(--brand); outline-offset:1px;}
+.unit{display:flex; align-items:center; padding:0 12px; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--text-dim);}
+.primary-btn{background:var(--brand); color:var(--brand-contrast); border:none; border-radius:10px; padding:11px 18px; font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer;}
+.primary-btn:hover{filter:brightness(1.06);}
+.secondary-btn{background:var(--text); color:var(--bg); border:none; border-radius:10px; padding:12px 18px; font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:.92rem; cursor:pointer;}
+.secondary-btn:hover{filter:brightness(1.15);}
+
+.feedback{display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px; font-size:.88rem; font-weight:500;}
+.feedback.good{background:var(--accent-kcl-soft); color:var(--good);}
+.feedback.bad{background:rgba(220,38,38,.12); color:var(--bad);}
+.feedback svg{flex:0 0 auto;}
+
+.steps-wrap{display:flex; flex-direction:column; gap:10px;}
+.steps-list{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px; font-size:.88rem; line-height:1.5; color:var(--text);}
+.steps-list sub{font-size:.72em;}
+
+.progress-line{font-size:.78rem; color:var(--text-dim); border-top:1px solid var(--border); padding-top:12px;}
+
+.theory{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:700px){ .theory{grid-template-columns:1fr;} }
+.theory .card h3{font-size:1rem; margin-bottom:8px;}
+.theory .card p{font-size:.88rem; line-height:1.55; color:var(--text-dim); margin:6px 0;}
+.formula{font-family:'IBM Plex Mono',monospace; font-size:1rem; background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin:8px 0; text-align:center; color:var(--text); font-weight:500;}
+
+.brand-mark{flex:0 0 auto;}
+footer{text-align:center; color:var(--text-dim); font-size:.76rem; padding-top:8px;}
+</style>
+
+<div class="app">
+  <header class="app-header">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 48 48" width="32" height="32" aria-hidden="true">
+        <circle cx="9" cy="24" r="4" fill="var(--brand)"/>
+        <path d="M13 24 H18 L21 15 L27 33 L30 24 H39" fill="none" stroke="var(--brand)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="39" cy="24" r="4" fill="var(--brand)"/>
+      </svg>
+      <div>
+        <h1>Kirchhoff Trainer</h1>
+        <p class="subtitle">KCL &amp; KVL oefenen — stof uit hoofdstuk 1 &amp; 2</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="ghost-btn" id="theoryToggleBtn" type="button">Theorie</button>
+      <button class="ghost-btn subtle" id="resetStatsBtn" type="button">Voortgang wissen</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Oefencategorieën"></nav>
+  <p class="legend"><span><span class="legend-dot kcl"></span>KCL</span><span><span class="legend-dot kvl"></span>KVL</span><span><span class="legend-dot mixed"></span>KCL + KVL</span></p>
+
+  <main class="layout" id="practiceView">
+    <div class="circuit-card card accent-kcl" id="circuitCard">
+      <div class="circuit-caption" id="circuitCaption">Schema</div>
+      <svg id="circuitSvg" viewBox="0 0 380 300" role="img" aria-label="Schakelschema">
+        <defs>
+          <marker id="arrowhead-neutral" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" class="arrow-fill-neutral"></path>
+          </marker>
+          <marker id="arrowhead-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 Z" class="arrow-fill-accent"></path>
+          </marker>
+        </defs>
+        <g id="circuitG"></g>
+      </svg>
+    </div>
+
+    <div class="question-card card">
+      <span class="law-chip" id="lawChip">KCL</span>
+      <p class="question-text" id="questionText"></p>
+      <div class="answer-row">
+        <input id="answerInput" type="text" inputmode="decimal" autocomplete="off" placeholder="antwoord">
+        <span class="unit" id="unitLabel">A</span>
+        <button class="primary-btn" id="checkBtn" type="button">Controleer</button>
+      </div>
+      <div class="feedback hidden" id="feedback"></div>
+      <div class="steps-wrap">
+        <button class="ghost-btn" id="stepsToggleBtn" type="button">Toon uitwerking</button>
+        <ol class="steps-list hidden" id="stepsList"></ol>
+      </div>
+      <button class="secondary-btn" id="nextBtn" type="button">Volgende opgave →</button>
+      <div class="progress-line" id="progressLine"></div>
+    </div>
+  </main>
+
+  <section class="theory hidden" id="theoryView">
+    <div class="card">
+      <h3>Knooppunt, tak en lus</h3>
+      <p><b>Knooppunt</b> — een punt waar twee of meer takken samenkomen.</p>
+      <p><b>Tak</b> — een enkel element (of serieketen) tussen twee knooppunten.</p>
+      <p><b>Lus</b> — elk gesloten pad door het netwerk dat geen knooppunt twee keer bezoekt.</p>
+    </div>
+    <div class="card">
+      <h3>Stroomwet van Kirchhoff (KCL)</h3>
+      <p>De som van alle stromen die een knooppunt <b>in</b> gaan is gelijk aan de som van alle stromen die het <b>verlaten</b> — lading kan nergens blijven "plakken".</p>
+      <div class="formula">Σ I<sub>in</sub> = Σ I<sub>out</sub></div>
+      <p>Kies zelf een referentierichting per onbekende stroom. Komt er een negatieve waarde uit? Dan loopt de werkelijke stroom tegengesteld aan je pijl.</p>
+    </div>
+    <div class="card">
+      <h3>Spanningswet van Kirchhoff (KVL)</h3>
+      <p>Loop je een gesloten lus rond, dan is de som van alle spanningsstijgingen en -dalingen samen nul.</p>
+      <div class="formula">Σ V = 0 (rondom een lus)</div>
+      <p>Doorloop de lus in één richting (bv. met de klok mee). Van − naar + door een element: tel als stijging (+). Van + naar −: tel als daling (−).</p>
+    </div>
+    <div class="card">
+      <h3>Wet van Ohm &amp; vermogen</h3>
+      <div class="formula">V = I·R</div>
+      <div class="formula">P = V·I = I²·R = V²/R</div>
+      <p>Bij de passieve tekenconventie kies je de stroom het element in aan de + kant. Positief vermogen: het element neemt energie op. Negatief: het levert energie.</p>
+    </div>
+    <div class="card">
+      <h3>Serie- en parallelschakelingen</h3>
+      <div class="formula">R<sub>serie</sub> = R1 + R2 + … + Rn</div>
+      <div class="formula">1/R<sub>parallel</sub> = 1/R1 + 1/R2 + … + 1/Rn</div>
+      <p>In serie loopt door elk element dezelfde stroom (KCL); parallel staat over elk element dezelfde spanning (KVL).</p>
+    </div>
+    <div class="card">
+      <h3>Delers &amp; knooppuntspanning</h3>
+      <div class="formula">v<sub>k</sub> = v<sub>s</sub> · R<sub>k</sub> / R<sub>serie</sub></div>
+      <div class="formula">i<sub>k</sub> = i<sub>s</sub> · R<sub>parallel</sub> / R<sub>k</sub></div>
+      <p>Bij de knooppuntspanningsmethode schrijf je in elk knooppunt de KCL-vergelijking op in termen van de onbekende knooppuntspanningen en los je het stelsel op.</p>
+    </div>
+  </section>
+
+  <footer>Alle oefeningen worden willekeurig gegenereerd — klik op "Volgende opgave" voor een nieuwe versie.</footer>
+</div>
+
+<script>
+function rnd(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function round2(n){ let r = Math.round(n*100)/100; if(Object.is(r,-0)) r=0; return r; }
+function fmt(n){
+  let r = round2(n);
+  let s = r.toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
+  if(s===''||s==='-') s='0';
+  return s.replace('.', ',');
+}
+
+/* ---------- SVG primitives ---------- */
+function resistorH(cx,cy,w,h){
+  const pts=[[-1,0],[-0.6,-1],[-0.2,1],[0.2,-1],[0.6,1],[1,0]];
+  const d = pts.map((p,i)=>`${i===0?'M':'L'} ${(cx+p[0]*w/2).toFixed(1)} ${(cy+p[1]*h/2).toFixed(1)}`).join(' ');
+  return `<path class="comp" d="${d}"/>`;
+}
+function resistorV(cx,cy,h,w){
+  const pts=[[0,-1],[-1,-0.6],[1,-0.2],[-1,0.2],[1,0.6],[0,1]];
+  const d = pts.map((p,i)=>`${i===0?'M':'L'} ${(cx+p[0]*w/2).toFixed(1)} ${(cy+p[1]*h/2).toFixed(1)}`).join(' ');
+  return `<path class="comp" d="${d}"/>`;
+}
+function batteryV(cx,cy,plusAt){
+  const gap=6, longW=22, shortW=13;
+  const topIsPlus = plusAt==='top';
+  const yTop=cy-gap, yBot=cy+gap;
+  const topPlate = topIsPlus? `<line class="plate-long" x1="${cx-longW/2}" y1="${yTop}" x2="${cx+longW/2}" y2="${yTop}"/>`
+                             : `<line class="plate-short" x1="${cx-shortW/2}" y1="${yTop}" x2="${cx+shortW/2}" y2="${yTop}"/>`;
+  const botPlate = topIsPlus? `<line class="plate-short" x1="${cx-shortW/2}" y1="${yBot}" x2="${cx+shortW/2}" y2="${yBot}"/>`
+                             : `<line class="plate-long" x1="${cx-longW/2}" y1="${yBot}" x2="${cx+longW/2}" y2="${yBot}"/>`;
+  return topPlate+botPlate+
+    `<text class="sign" x="${cx+16}" y="${yTop-3}" text-anchor="start">${topIsPlus?'+':'−'}</text>`+
+    `<text class="sign" x="${cx+16}" y="${yBot+13}" text-anchor="start">${topIsPlus?'−':'+'}</text>`;
+}
+function currentSourceSymbol(cx,cy,r,arrowUp){
+  const y1 = arrowUp? cy+r*0.55 : cy-r*0.55;
+  const y2 = arrowUp? cy-r*0.55 : cy+r*0.55;
+  return `<circle class="comp" cx="${cx}" cy="${cy}" r="${r}"/>`+
+    `<g class="arrow-neutral"><line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}" marker-end="url(#arrowhead-neutral)"/></g>`;
+}
+function groundSymbol(cx,railY){
+  const s=railY+12;
+  return `<line class="wire" x1="${cx}" y1="${railY}" x2="${cx}" y2="${s}"/>`+
+    `<line class="comp" x1="${cx-13}" y1="${s}" x2="${cx+13}" y2="${s}"/>`+
+    `<line class="comp" x1="${cx-8}" y1="${s+5}" x2="${cx+8}" y2="${s+5}"/>`+
+    `<line class="comp" x1="${cx-3}" y1="${s+10}" x2="${cx+3}" y2="${s+10}"/>`;
+}
+function dot(x,y){ return `<circle class="node-dot" cx="${x}" cy="${y}" r="4"/>`; }
+
+/* ---------- Generator 1: KCL bij een knooppunt ---------- */
+function svgKCLNode(branches){
+  const cx=190, cy=150, L=95;
+  const geom = {
+    boven: {end:[cx,cy-L], arrow:[cx,cy-55], labelPos:[cx,cy-L-14], anchor:'middle'},
+    rechts:{end:[cx+L,cy], arrow:[cx+55,cy], labelPos:[cx+L+14,cy], anchor:'start'},
+    onder: {end:[cx,cy+L], arrow:[cx,cy+55], labelPos:[cx,cy+L+18], anchor:'middle'},
+    links: {end:[cx-L,cy], arrow:[cx-55,cy], labelPos:[cx-L-14,cy], anchor:'end'},
+  };
+  const outAngle = {boven:270, rechts:0, onder:90, links:180};
+  let wires='', arrows='', labels='';
+  branches.forEach(b=>{
+    const g = geom[b.pos];
+    wires += `<line class="wire" x1="${cx}" y1="${cy}" x2="${g.end[0]}" y2="${g.end[1]}"/>`;
+    const angle = b.dir==='out'? outAngle[b.pos] : (outAngle[b.pos]+180)%360;
+    const arrowCls = b.isUnknown? 'arrow-accent':'arrow-neutral';
+    const markerId = b.isUnknown? 'arrowhead-accent':'arrowhead-neutral';
+    arrows += `<g class="${arrowCls}" transform="translate(${g.arrow[0]},${g.arrow[1]}) rotate(${angle})"><line x1="-10" y1="0" x2="10" y2="0" marker-end="url(#${markerId})"/></g>`;
+    const dy = g.anchor==='middle' ? '' : ' dy=".35em"';
+    const labelText = b.isUnknown ? `i<tspan baseline-shift="sub" font-size="9">x</tspan> = ?` : `i<tspan baseline-shift="sub" font-size="9">${b.letter}</tspan> = ${fmt(b.value)} A`;
+    labels += `<text class="${b.isUnknown?'lbl-unknown':'lbl'}" x="${g.labelPos[0]}" y="${g.labelPos[1]}" text-anchor="${g.anchor}"${dy}>${labelText}</text>`;
+  });
+  return wires+dot(cx,cy)+arrows+labels;
+}
+function genKCLNode(){
+  const dirNames=['boven','rechts','onder','links'];
+  const letters=['a','b','c','d'];
+  const unknownIdx=rnd(0,3);
+  const dirs=dirNames.map(()=> Math.random()<0.5?'in':'out');
+  const values=dirNames.map(()=> rnd(2,9));
+  let sumIn=0,sumOut=0;
+  const knownParts=[];
+  for(let i=0;i<4;i++){
+    if(i===unknownIdx) continue;
+    if(dirs[i]==='in') sumIn+=values[i]; else sumOut+=values[i];
+    knownParts.push({letter:letters[i], dir:dirs[i], value:values[i]});
+  }
+  const uDir=dirs[unknownIdx];
+  let answer = uDir==='in' ? sumOut-sumIn : sumIn-sumOut;
+  answer = round2(answer);
+  const enteringStr = knownParts.filter(k=>k.dir==='in').map(k=>`i<sub>${k.letter}</sub> = ${fmt(k.value)} A`).join(', ') || 'geen';
+  const leavingStr = knownParts.filter(k=>k.dir==='out').map(k=>`i<sub>${k.letter}</sub> = ${fmt(k.value)} A`).join(', ') || 'geen';
+  const steps=[
+    `KCL: de som van de stromen die het knooppunt <b>binnenkomen</b> is gelijk aan de som van de stromen die het <b>verlaten</b>.`,
+    `Binnenkomend (volgens de getekende pijlen): ${enteringStr}.`,
+    `Verlatend (volgens de getekende pijlen): ${leavingStr}${uDir==='out'?', en i<sub>x</sub>':''}.`,
+    uDir==='in'
+      ? `${fmt(sumIn)} + i<sub>x</sub> = ${fmt(sumOut)}  →  i<sub>x</sub> = ${fmt(sumOut)} − ${fmt(sumIn)} = ${fmt(answer)} A`
+      : `${fmt(sumIn)} = ${fmt(sumOut)} + i<sub>x</sub>  →  i<sub>x</sub> = ${fmt(sumIn)} − ${fmt(sumOut)} = ${fmt(answer)} A`,
+  ];
+  if(answer<0) steps.push(`Omdat i<sub>x</sub> negatief is, loopt de werkelijke stroom tegengesteld aan de getekende referentiepijl.`);
+  const svg = svgKCLNode(dirNames.map((pos,i)=>({pos, letter: i===unknownIdx?'x':letters[i], dir:dirs[i], value:values[i], isUnknown:i===unknownIdx})));
+  return {
+    accent:'kcl', title:'KCL bij een knooppunt',
+    question:`Bepaal de onbekende stroom i<sub>x</sub> met behulp van de stroomwet van Kirchhoff (KCL). Let goed op de richting van de pijlen.`,
+    unit:'A', answer, tolerance:Math.max(0.05, Math.abs(answer)*0.02), steps, svg
+  };
+}
+
+/* ---------- Generator 2: KVL in een lus ---------- */
+function svgKVLLoop(sides){
+  const TL=[110,60], TR=[310,60], BR=[310,220], BL=[110,220];
+  const sideGeom = {
+    boven: {p20:[150,46], p80:[270,46], mid:[210,38], anchor:'middle'},
+    rechts:{p20:[324,92], p80:[324,188], mid:[340,140], anchor:'start'},
+    onder: {p20:[270,234], p80:[150,234], mid:[210,250], anchor:'middle'},
+    links: {p20:[96,188], p80:[96,92], mid:[80,140], anchor:'end'},
+  };
+  let out = `<polygon class="wire" points="${TL.join(',')} ${TR.join(',')} ${BR.join(',')} ${BL.join(',')}" fill="none"/>`;
+  out += [TL,TR,BR,BL].map(p=>dot(p[0],p[1])).join('');
+  let signs='', labels='';
+  sides.forEach(s=>{
+    const g = sideGeom[s.pos];
+    const signAtStart = s.orient==='stijging' ? '−' : '+';
+    const signAtEnd = s.orient==='stijging' ? '+' : '−';
+    const cls = s.isUnknown ? 'sign-accent':'sign';
+    signs += `<text class="${cls}" x="${g.p20[0]}" y="${g.p20[1]}" text-anchor="middle" dy=".35em">${signAtStart}</text>`;
+    signs += `<text class="${cls}" x="${g.p80[0]}" y="${g.p80[1]}" text-anchor="middle" dy=".35em">${signAtEnd}</text>`;
+    const labelText = s.isUnknown ? `V<tspan baseline-shift="sub" font-size="9">x</tspan> = ?` : `V<tspan baseline-shift="sub" font-size="9">${s.letter}</tspan> = ${fmt(s.value)} V`;
+    labels += `<text class="${s.isUnknown?'lbl-unknown':'lbl'}" x="${g.mid[0]}" y="${g.mid[1]}" text-anchor="${g.anchor}">${labelText}</text>`;
+  });
+  const dirArrow = `<path class="wire" d="M 195 140 A 15 15 0 1 1 194.9 140" fill="none" marker-end="url(#arrowhead-neutral)"/><text class="hint" x="210" y="112" text-anchor="middle">met de klok mee</text>`;
+  return out+signs+labels+dirArrow;
+}
+function genKVLLoop(){
+  const sideNames=['boven','rechts','onder','links'];
+  const letters=['a','b','c','d'];
+  const unknownIdx=rnd(0,3);
+  const orients=sideNames.map(()=> Math.random()<0.5?'stijging':'daling');
+  const values=sideNames.map(()=> rnd(2,15));
+  let sumKnown=0;
+  const knownParts=[];
+  for(let i=0;i<4;i++){
+    if(i===unknownIdx) continue;
+    const contrib = orients[i]==='stijging'? values[i] : -values[i];
+    sumKnown += contrib;
+    knownParts.push({letter:letters[i], orient:orients[i], value:values[i]});
+  }
+  const uOrient=orients[unknownIdx];
+  let answer = uOrient==='stijging' ? -sumKnown : sumKnown;
+  answer = round2(answer);
+  const termsStr = knownParts.map(k=> `${k.orient==='stijging'?'+':'−'}${fmt(k.value)}`).join(' ');
+  const unknownTerm = uOrient==='stijging' ? '+ Vx' : '− Vx';
+  const steps=[
+    `KVL: doorloop de lus met de klok mee. Een <b>spanningsstijging</b> (van − naar +) tel je als <b>positief</b>, een <b>spanningsdaling</b> (van + naar −) als <b>negatief</b>. De som over de hele lus is nul.`,
+    `${termsStr} ${unknownTerm} = 0`,
+    `V<sub>x</sub> = ${fmt(answer)} V`,
+  ];
+  const svg = svgKVLLoop(sideNames.map((pos,i)=>({pos, letter: i===unknownIdx?'x':letters[i], orient:orients[i], value:values[i], isUnknown:i===unknownIdx})));
+  return {
+    accent:'kvl', title:'KVL in een lus',
+    question:`Bepaal de onbekende spanning V<sub>x</sub> met behulp van de spanningswet van Kirchhoff (KVL).`,
+    unit:'V', answer, tolerance:Math.max(0.05, Math.abs(answer)*0.02), steps, svg
+  };
+}
+
+/* ---------- Generator 3: Serieschakeling ---------- */
+function svgSeries(p){
+  const top=60, bottom=230, left=90, right=290, rw=80, rh=18, bg=11;
+  let out='';
+  out += `<line class="wire" x1="${left}" y1="${top}" x2="${190-rw/2}" y2="${top}"/>`;
+  out += `<line class="wire" x1="${190+rw/2}" y1="${top}" x2="${right}" y2="${top}"/>`;
+  out += resistorH(190, top, rw, rh);
+  out += `<text class="lbl" x="190" y="${top-18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+  out += `<line class="wire" x1="${right}" y1="${top}" x2="${right}" y2="${145-rw/2}"/>`;
+  out += `<line class="wire" x1="${right}" y1="${145+rw/2}" x2="${right}" y2="${bottom}"/>`;
+  out += resistorV(right, 145, rw, rh);
+  out += `<text class="lbl" x="${right+16}" y="145" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+  out += `<line class="wire" x1="${right}" y1="${bottom}" x2="${left}" y2="${bottom}"/>`;
+  out += `<g class="arrow-neutral" transform="translate(190,${bottom}) rotate(180)"><line x1="-10" y1="0" x2="10" y2="0" marker-end="url(#arrowhead-neutral)"/></g>`;
+  out += `<text class="lbl" x="190" y="${bottom-14}" text-anchor="middle">I</text>`;
+  out += `<line class="wire" x1="${left}" y1="${bottom}" x2="${left}" y2="${145+bg}"/>`;
+  out += `<line class="wire" x1="${left}" y1="${145-bg}" x2="${left}" y2="${top}"/>`;
+  out += batteryV(left,145,'top');
+  out += `<text class="lbl" x="${left-18}" y="145" text-anchor="end" dy=".35em">V<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Vs)} V</text>`;
+  out += [[left,top],[right,top],[right,bottom],[left,bottom]].map(pt=>dot(pt[0],pt[1])).join('');
+  return out;
+}
+function genSeries(){
+  const I=rnd(1,6), R1=rnd(2,20), R2=rnd(2,20);
+  const Vs=I*(R1+R2);
+  const v2=round2(I*R2), P1=round2(I*I*R1);
+  const variants=[
+    {q:`Bereken de stroom I door het circuit.`, unit:'A', answer:I, extra:`Dus I = ${fmt(I)} A.`},
+    {q:`Bereken de spanning v<sub>2</sub> over R<sub>2</sub>.`, unit:'V', answer:v2, extra:`v<sub>2</sub> = I·R<sub>2</sub> = ${fmt(I)} × ${fmt(R2)} = ${fmt(v2)} V.`},
+    {q:`Bereken het vermogen P<sub>1</sub> dat R<sub>1</sub> dissipeert.`, unit:'W', answer:P1, extra:`P<sub>1</sub> = I²·R<sub>1</sub> = ${fmt(I)}² × ${fmt(R1)} = ${fmt(P1)} W.`},
+  ];
+  const v = pick(variants);
+  const steps=[
+    `Pas KVL toe rond de lus (met de klok mee vanaf de bron): V<sub>s</sub> − I·R<sub>1</sub> − I·R<sub>2</sub> = 0.`,
+    `I = V<sub>s</sub> / (R<sub>1</sub> + R<sub>2</sub>) = ${fmt(Vs)} / (${fmt(R1)} + ${fmt(R2)}) = ${fmt(I)} A.`,
+    v.extra,
+  ];
+  return {
+    accent:'kvl', title:'Serieschakeling', question:v.q, unit:v.unit, answer:v.answer,
+    tolerance:Math.max(0.05, Math.abs(v.answer)*0.02), steps, svg: svgSeries({Vs,R1,R2})
+  };
+}
+
+/* ---------- Generator 4: Parallelschakeling ---------- */
+function svgParallel(p){
+  const top=60, bottom=220, xIs=90, xR1=195, xR2=300, rw=80, rh=18;
+  let out='';
+  out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xR2}" y2="${top}"/>`;
+  out += `<line class="wire" x1="${xIs}" y1="${bottom}" x2="${xR2}" y2="${bottom}"/>`;
+  [xIs,xR1,xR2].forEach(x=>{ out+=dot(x,top)+dot(x,bottom); });
+  out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xIs}" y2="${140-24}"/>`;
+  out += `<line class="wire" x1="${xIs}" y1="${140+24}" x2="${xIs}" y2="${bottom}"/>`;
+  out += currentSourceSymbol(xIs,140,20,true);
+  out += `<text class="lbl" x="${xIs-30}" y="140" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
+  out += `<line class="wire" x1="${xR1}" y1="${top}" x2="${xR1}" y2="${140-rw/2}"/>`;
+  out += `<line class="wire" x1="${xR1}" y1="${140+rw/2}" x2="${xR1}" y2="${bottom}"/>`;
+  out += resistorV(xR1,140,rw,rh);
+  out += `<text class="lbl" x="${xR1+16}" y="140" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+  out += `<line class="wire" x1="${xR2}" y1="${top}" x2="${xR2}" y2="${140-rw/2}"/>`;
+  out += `<line class="wire" x1="${xR2}" y1="${140+rw/2}" x2="${xR2}" y2="${bottom}"/>`;
+  out += resistorV(xR2,140,rw,rh);
+  out += `<text class="lbl" x="${xR2+16}" y="140" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+  out += groundSymbol(195, bottom);
+  out += `<text class="hint" x="${(xIs+xR2)/2}" y="${top-14}" text-anchor="middle">knooppunt v</text>`;
+  return out;
+}
+function genParallel(){
+  const Is=rnd(3,15), R1=rnd(2,30), R2=rnd(2,30);
+  const Req = 1/(1/R1+1/R2);
+  const v=round2(Is*Req), i1=round2(v/R1), i2=round2(v/R2);
+  const variants=[
+    {q:`Bereken de knooppuntspanning v over R<sub>1</sub> en R<sub>2</sub>.`, unit:'V', answer:v, extra:`Dus v = ${fmt(v)} V.`},
+    {q:`Bereken de stroom i<sub>1</sub> door R<sub>1</sub>.`, unit:'A', answer:i1, extra:`i<sub>1</sub> = v / R<sub>1</sub> = ${fmt(v)} / ${fmt(R1)} = ${fmt(i1)} A.`},
+    {q:`Bereken de stroom i<sub>2</sub> door R<sub>2</sub>.`, unit:'A', answer:i2, extra:`i<sub>2</sub> = v / R<sub>2</sub> = ${fmt(v)} / ${fmt(R2)} = ${fmt(i2)} A.`},
+  ];
+  const q = pick(variants);
+  const steps=[
+    `R<sub>1</sub> en R<sub>2</sub> staan parallel, dus ze hebben dezelfde spanning v.`,
+    `KCL in het bovenste knooppunt: I<sub>s</sub> = i<sub>1</sub> + i<sub>2</sub> = v/R<sub>1</sub> + v/R<sub>2</sub>.`,
+    `v = I<sub>s</sub> / (1/R<sub>1</sub> + 1/R<sub>2</sub>) = ${fmt(Is)} / (1/${fmt(R1)} + 1/${fmt(R2)}) = ${fmt(v)} V.`,
+    q.extra,
+  ];
+  return {
+    accent:'kcl', title:'Parallelschakeling', question:q.q, unit:q.unit, answer:q.answer,
+    tolerance:Math.max(0.05, Math.abs(q.answer)*0.02), steps, svg: svgParallel({Is,R1,R2})
+  };
+}
+
+/* ---------- Generator 5: Gemengde schakeling ---------- */
+function svgMixed(p){
+  const top=60, bottom=240, xVs=90, xB=205, xC=300, rw=70, rh=18, bg=11;
+  let out='';
+  out += `<line class="wire" x1="${xVs}" y1="${top}" x2="${150-rw/2}" y2="${top}"/>`;
+  out += `<line class="wire" x1="${150+rw/2}" y1="${top}" x2="${xC}" y2="${top}"/>`;
+  out += resistorH(150, top, rw, rh);
+  out += `<text class="lbl" x="150" y="${top-18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+  out += `<line class="wire" x1="${xB}" y1="${top}" x2="${xB}" y2="${150-rw/2}"/>`;
+  out += `<line class="wire" x1="${xB}" y1="${150+rw/2}" x2="${xB}" y2="${bottom}"/>`;
+  out += resistorV(xB,150,rw,rh);
+  out += `<text class="lbl" x="${xB+16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+  out += `<line class="wire" x1="${xC}" y1="${top}" x2="${xC}" y2="${150-rw/2}"/>`;
+  out += `<line class="wire" x1="${xC}" y1="${150+rw/2}" x2="${xC}" y2="${bottom}"/>`;
+  out += resistorV(xC,150,rw,rh);
+  out += `<text class="lbl" x="${xC+16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">3</tspan> = ${fmt(p.R3)} Ω</text>`;
+  out += `<line class="wire" x1="${xC}" y1="${bottom}" x2="${xVs}" y2="${bottom}"/>`;
+  out += `<line class="wire" x1="${xVs}" y1="${bottom}" x2="${xVs}" y2="${150+bg}"/>`;
+  out += `<line class="wire" x1="${xVs}" y1="${150-bg}" x2="${xVs}" y2="${top}"/>`;
+  out += batteryV(xVs,150,'top');
+  out += `<text class="lbl" x="${xVs-18}" y="150" text-anchor="end" dy=".35em">V<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Vs)} V</text>`;
+  out += [[xVs,top],[xB,top],[xC,top],[xVs,bottom],[xB,bottom],[xC,bottom]].map(pt=>dot(pt[0],pt[1])).join('');
+  return out;
+}
+function genMixed(){
+  const Vs=rnd(12,60), R1=rnd(2,25), R2=rnd(2,25), R3=rnd(2,25);
+  const Req23 = 1/(1/R2+1/R3);
+  const Itot = round2(Vs/(R1+Req23));
+  const Vpar = round2(Itot*Req23);
+  const i2 = round2(Vpar/R2), i3 = round2(Vpar/R3);
+  const variants=[
+    {q:`Bereken de totale stroom I die uit de bron komt.`, unit:'A', answer:Itot, extra:`Dus I = ${fmt(Itot)} A.`},
+    {q:`Bereken de spanning v over de parallelcombinatie van R<sub>2</sub> en R<sub>3</sub>.`, unit:'V', answer:Vpar, extra:`Dus v = ${fmt(Vpar)} V.`},
+    {q:`Bereken de stroom i<sub>2</sub> door R<sub>2</sub>.`, unit:'A', answer:i2, extra:`i<sub>2</sub> = v/R<sub>2</sub> = ${fmt(Vpar)} / ${fmt(R2)} = ${fmt(i2)} A (KCL: i<sub>2</sub> + i<sub>3</sub> = I).`},
+    {q:`Bereken de stroom i<sub>3</sub> door R<sub>3</sub>.`, unit:'A', answer:i3, extra:`i<sub>3</sub> = v/R<sub>3</sub> = ${fmt(Vpar)} / ${fmt(R3)} = ${fmt(i3)} A (KCL: i<sub>2</sub> + i<sub>3</sub> = I).`},
+  ];
+  const q = pick(variants);
+  const steps=[
+    `Combineer eerst R<sub>2</sub> en R<sub>3</sub> (parallel) tot één vervangingsweerstand: R<sub>eq</sub> = 1/(1/R<sub>2</sub> + 1/R<sub>3</sub>) = ${fmt(Req23)} Ω.`,
+    `Pas KVL toe op de resulterende serielus: V<sub>s</sub> − I·R<sub>1</sub> − I·R<sub>eq</sub> = 0.`,
+    `I = V<sub>s</sub> / (R<sub>1</sub> + R<sub>eq</sub>) = ${fmt(Vs)} / (${fmt(R1)} + ${fmt(Req23)}) = ${fmt(Itot)} A.`,
+    `v = I · R<sub>eq</sub> = ${fmt(Itot)} × ${fmt(Req23)} = ${fmt(Vpar)} V.`,
+    q.extra,
+  ];
+  return {
+    accent:'mixed', title:'Gemengde schakeling', question:q.q, unit:q.unit, answer:q.answer,
+    tolerance:Math.max(0.05, Math.abs(q.answer)*0.02), steps, svg: svgMixed({Vs,R1,R2,R3})
+  };
+}
+
+/* ---------- Generator 6: Knooppuntspanning (KCL-methode) ---------- */
+function svgNodeVoltage(p){
+  const top=70, bottom=230, xIs=110, xR1=210, xN2=290, rw=70, rh=18, bg=11;
+  let out='';
+  out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xR1}" y2="${top}"/>`;
+  out += `<line class="wire" x1="${xR1}" y1="${top}" x2="${250-rw/2}" y2="${top}"/>`;
+  out += resistorH(250, top, rw, rh);
+  out += `<line class="wire" x1="${250+rw/2}" y1="${top}" x2="${xN2}" y2="${top}"/>`;
+  out += `<text class="lbl" x="250" y="${top-18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+  out += `<text class="lbl-unknown" x="150" y="${top-18}" text-anchor="middle">v<tspan baseline-shift="sub" font-size="9">1</tspan> = ?</text>`;
+  out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xIs}" y2="${150-24}"/>`;
+  out += `<line class="wire" x1="${xIs}" y1="${150+24}" x2="${xIs}" y2="${bottom}"/>`;
+  out += currentSourceSymbol(xIs,150,20,true);
+  out += `<text class="lbl" x="${xIs-30}" y="150" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
+  out += `<line class="wire" x1="${xR1}" y1="${top}" x2="${xR1}" y2="${150-rw/2}"/>`;
+  out += `<line class="wire" x1="${xR1}" y1="${150+rw/2}" x2="${xR1}" y2="${bottom}"/>`;
+  out += resistorV(xR1,150,rw,rh);
+  out += `<text class="lbl" x="${xR1+16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+  out += `<line class="wire" x1="${xN2}" y1="${top}" x2="${xN2}" y2="${150-bg}"/>`;
+  out += `<line class="wire" x1="${xN2}" y1="${150+bg}" x2="${xN2}" y2="${bottom}"/>`;
+  out += batteryV(xN2,150,'top');
+  out += `<text class="lbl" x="${xN2+16}" y="150" text-anchor="start" dy=".35em">V<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.V2)} V</text>`;
+  out += `<line class="wire" x1="${xIs}" y1="${bottom}" x2="${xN2}" y2="${bottom}"/>`;
+  out += groundSymbol(200, bottom);
+  out += [[xIs,top],[xR1,top],[xN2,top],[xIs,bottom],[xR1,bottom],[xN2,bottom]].map(pt=>dot(pt[0],pt[1])).join('');
+  return out;
+}
+function genNodeVoltage(){
+  const Is=rnd(3,12), R1=rnd(2,20), R2=rnd(2,20), V2=rnd(2,20);
+  const v1 = round2((Is + V2/R2) / (1/R1 + 1/R2));
+  const steps=[
+    `Stel de KCL-vergelijking op in knooppunt 1 (som van de stromen die het knooppunt verlaten = de ingaande bronstroom):`,
+    `I<sub>s</sub> = v<sub>1</sub>/R<sub>1</sub> + (v<sub>1</sub> − V<sub>2</sub>)/R<sub>2</sub>`,
+    `${fmt(Is)} = v<sub>1</sub>/${fmt(R1)} + (v<sub>1</sub> − ${fmt(V2)})/${fmt(R2)}`,
+    `Werk uit en los op naar v<sub>1</sub>: v<sub>1</sub> = (I<sub>s</sub> + V<sub>2</sub>/R<sub>2</sub>) / (1/R<sub>1</sub> + 1/R<sub>2</sub>) = ${fmt(v1)} V.`,
+  ];
+  return {
+    accent:'kcl', title:'Knooppuntspanning',
+    question:`Bepaal de knooppuntspanning v<sub>1</sub> met de knooppuntspanningsmethode (gebaseerd op KCL).`,
+    unit:'V', answer:v1, tolerance:Math.max(0.05, Math.abs(v1)*0.02), steps,
+    svg: svgNodeVoltage({Is,R1,R2,V2})
+  };
+}
+
+/* ---------- App ---------- */
+const CATEGORIES=[
+  {id:'kcl-node', label:'KCL bij een knooppunt', accent:'kcl', gen:genKCLNode},
+  {id:'kvl-loop', label:'KVL in een lus', accent:'kvl', gen:genKVLLoop},
+  {id:'series', label:'Serieschakeling', accent:'kvl', gen:genSeries},
+  {id:'parallel', label:'Parallelschakeling', accent:'kcl', gen:genParallel},
+  {id:'mixed', label:'Gemengde schakeling', accent:'mixed', gen:genMixed},
+  {id:'nodevoltage', label:'Knooppuntspanning', accent:'kcl', gen:genNodeVoltage},
+];
+const STORAGE_KEY='kirchhoff-trainer-stats-v1';
+let stats = loadStats();
+let currentCategoryId = 'kcl-node';
+let currentProblem = null;
+let answerState = 'pending';
+
+function loadStats(){
+  let s=null;
+  try{ const raw=localStorage.getItem(STORAGE_KEY); if(raw) s=JSON.parse(raw); }catch(e){}
+  if(!s) s={};
+  CATEGORIES.forEach(c=>{ if(!s[c.id]) s[c.id]={attempts:0,correct:0,streak:0,best:0}; });
+  return s;
+}
+function saveStats(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(stats)); }catch(e){} }
+
+const tabsEl=document.getElementById('tabs');
+const circuitCard=document.getElementById('circuitCard');
+const circuitCaption=document.getElementById('circuitCaption');
+const circuitG=document.getElementById('circuitG');
+const lawChip=document.getElementById('lawChip');
+const questionText=document.getElementById('questionText');
+const answerInput=document.getElementById('answerInput');
+const unitLabel=document.getElementById('unitLabel');
+const checkBtn=document.getElementById('checkBtn');
+const feedbackEl=document.getElementById('feedback');
+const stepsToggleBtn=document.getElementById('stepsToggleBtn');
+const stepsList=document.getElementById('stepsList');
+const nextBtn=document.getElementById('nextBtn');
+const progressLine=document.getElementById('progressLine');
+const practiceView=document.getElementById('practiceView');
+const theoryView=document.getElementById('theoryView');
+const theoryToggleBtn=document.getElementById('theoryToggleBtn');
+const resetStatsBtn=document.getElementById('resetStatsBtn');
+
+const iconCheck=`<svg width="18" height="18" viewBox="0 0 20 20"><path d="M4 10.5 L8 14.5 L16 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const iconCross=`<svg width="18" height="18" viewBox="0 0 20 20"><path d="M5 5 L15 15 M15 5 L5 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+
+function accentLabel(a){ return a==='kcl'?'KCL':a==='kvl'?'KVL':'KCL + KVL'; }
+
+function renderTabs(){
+  tabsEl.innerHTML = CATEGORIES.map(c=>{
+    const s = stats[c.id];
+    const badge = s.attempts>0 ? `<span class="tab-badge">${s.correct}/${s.attempts}</span>` : '';
+    return `<button class="tab-btn${c.id===currentCategoryId?' active':''}" data-id="${c.id}" type="button">
+      <span class="tab-dot ${c.accent}"></span>${c.label}${badge}
+    </button>`;
+  }).join('');
+  tabsEl.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      currentCategoryId = btn.dataset.id;
+      showPractice();
+      newProblem();
+      renderTabs();
+    });
+  });
+}
+
+function newProblem(){
+  const cat = CATEGORIES.find(c=>c.id===currentCategoryId);
+  currentProblem = cat.gen();
+  answerState = 'pending';
+  circuitCard.className = 'circuit-card card accent-'+currentProblem.accent;
+  circuitCaption.textContent = currentProblem.title;
+  circuitG.innerHTML = currentProblem.svg;
+  lawChip.textContent = accentLabel(currentProblem.accent);
+  lawChip.className = 'law-chip law-'+currentProblem.accent;
+  questionText.innerHTML = currentProblem.question;
+  unitLabel.textContent = currentProblem.unit;
+  answerInput.value = '';
+  answerInput.disabled = false;
+  checkBtn.disabled = false;
+  checkBtn.textContent = 'Controleer';
+  feedbackEl.className = 'feedback hidden';
+  feedbackEl.innerHTML = '';
+  stepsList.innerHTML = currentProblem.steps.map(s=>`<li>${s}</li>`).join('');
+  stepsList.classList.add('hidden');
+  stepsToggleBtn.textContent = 'Toon uitwerking';
+  updateProgressLine();
+  answerInput.focus();
+}
+
+function updateProgressLine(){
+  const s = stats[currentCategoryId];
+  if(s.attempts===0){ progressLine.textContent = 'Nog geen pogingen in deze categorie.'; return; }
+  progressLine.textContent = `${s.correct} goed van de ${s.attempts} pogingen in deze categorie · beste reeks: ${s.best}`;
+}
+
+function parseInput(raw){
+  if(raw==null) return NaN;
+  const s = raw.trim().replace(/\s/g,'').replace(',', '.');
+  if(s==='') return NaN;
+  return parseFloat(s);
+}
+
+function checkAnswer(){
+  if(answerState==='correct'){ nextProblem(); return; }
+  const val = parseInput(answerInput.value);
+  if(isNaN(val)){
+    feedbackEl.className = 'feedback bad';
+    feedbackEl.innerHTML = iconCross+'<span>Vul eerst een getal in.</span>';
+    return;
+  }
+  const s = stats[currentCategoryId];
+  s.attempts++;
+  const ok = Math.abs(val-currentProblem.answer) <= currentProblem.tolerance;
+  if(ok){
+    s.correct++; s.streak++; s.best=Math.max(s.best,s.streak);
+    answerState='correct';
+    feedbackEl.className='feedback good';
+    feedbackEl.innerHTML = iconCheck+`<span>Goed! ${fmt(currentProblem.answer)} ${currentProblem.unit} is correct.</span>`;
+    answerInput.disabled = true; checkBtn.disabled = true;
+    stepsList.classList.remove('hidden');
+    stepsToggleBtn.textContent = 'Verberg uitwerking';
+  } else {
+    s.streak=0;
+    answerState='incorrect';
+    feedbackEl.className='feedback bad';
+    feedbackEl.innerHTML = iconCross+'<span>Nog niet juist. Probeer opnieuw, of bekijk de uitwerking.</span>';
+  }
+  saveStats();
+  renderTabs();
+  updateProgressLine();
+}
+
+function nextProblem(){ newProblem(); }
+
+function toggleSteps(){
+  const hidden = stepsList.classList.toggle('hidden');
+  stepsToggleBtn.textContent = hidden ? 'Toon uitwerking' : 'Verberg uitwerking';
+}
+
+function showPractice(){ practiceView.classList.remove('hidden'); theoryView.classList.add('hidden'); theoryToggleBtn.classList.remove('active'); }
+function showTheory(){ practiceView.classList.add('hidden'); theoryView.classList.remove('hidden'); theoryToggleBtn.classList.add('active'); }
+
+checkBtn.addEventListener('click', checkAnswer);
+nextBtn.addEventListener('click', nextProblem);
+stepsToggleBtn.addEventListener('click', toggleSteps);
+answerInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); checkAnswer(); } });
+theoryToggleBtn.addEventListener('click', ()=>{
+  if(theoryView.classList.contains('hidden')) showTheory(); else showPractice();
+});
+resetStatsBtn.addEventListener('click', ()=>{
+  CATEGORIES.forEach(c=> stats[c.id]={attempts:0,correct:0,streak:0,best:0});
+  saveStats(); renderTabs(); updateProgressLine();
+});
+
+renderTabs();
+newProblem();
+</script>
