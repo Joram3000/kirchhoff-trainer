@@ -9,10 +9,12 @@
     /** Zigzag amplitude perpendicular to that axis. */
     thickness: number;
     orientation?: Orientation;
+    /** Highlights this resistor as the subject of the current question. */
+    accent?: boolean;
   }
 
-  let { cx, cy, length, thickness, orientation = 'horizontal' }: Props = $props();
+  let { cx, cy, length, thickness, orientation = 'horizontal', accent = false }: Props = $props();
   let d = $derived(resistorPath(cx, cy, length, thickness, orientation));
 </script>
 
-<path class="comp" {d} />
+<path class="comp" class:comp-accent={accent} {d} />

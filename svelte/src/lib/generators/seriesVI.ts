@@ -2,11 +2,13 @@ import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import type { ResistorTarget } from '../utils/target';
 
 interface Variant {
   question: string;
   unit: string;
   answer: number;
+  target: ResistorTarget;
 }
 
 export function generateSeriesVI(): Problem {
@@ -17,9 +19,9 @@ export function generateSeriesVI(): Problem {
   const vx = round2(Vs - vR);
 
   const variants: Variant[] = [
-    { question: `Bereken de stroom door de spanningsbron V<sub>s</sub>.`, unit: 'A', answer: Is },
-    { question: `Bereken de spanning v<sub>R</sub> over de weerstand R.`, unit: 'V', answer: vR },
-    { question: `Bereken de spanning v<sub>x</sub> over de stroombron (via KVL).`, unit: 'V', answer: vx },
+    { question: `Bereken de stroom door de spanningsbron V<sub>s</sub>.`, unit: 'A', answer: Is, target: null },
+    { question: `Bereken de spanning v<sub>R</sub> over de weerstand R.`, unit: 'V', answer: vR, target: 'R' },
+    { question: `Bereken de spanning v<sub>x</sub> over de stroombron (via KVL).`, unit: 'V', answer: vx, target: null },
   ];
   const variant = pick(variants);
 
@@ -39,6 +41,6 @@ export function generateSeriesVI(): Problem {
     answer: variant.answer,
     tolerance: toleranceFor(variant.answer),
     steps,
-    circuit: { kind: 'series-vi', Vs, R, Is },
+    circuit: { kind: 'series-vi', Vs, R, Is, target: variant.target },
   };
 }

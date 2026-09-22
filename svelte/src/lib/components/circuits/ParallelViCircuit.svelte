@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fmt } from '../../utils/format';
+  import { isTarget, type ResistorTarget } from '../../utils/target';
   import ResistorSymbol from './primitives/ResistorSymbol.svelte';
   import BatterySymbol from './primitives/BatterySymbol.svelte';
   import CurrentSourceSymbol from './primitives/CurrentSourceSymbol.svelte';
@@ -10,9 +11,11 @@
     Vs: number;
     R: number;
     Is: number;
+    target: ResistorTarget;
   }
 
-  let { Vs, R, Is }: Props = $props();
+  let { Vs, R, Is, target }: Props = $props();
+  let rOn = $derived(isTarget('R', target));
 
   const top = 60;
   const bottom = 220;
@@ -39,8 +42,8 @@
 
 <line class="wire" x1={xR} y1={top} x2={xR} y2={midY - rw / 2} />
 <line class="wire" x1={xR} y1={midY + rw / 2} x2={xR} y2={bottom} />
-<ResistorSymbol cx={xR} cy={midY} length={rw} thickness={rh} orientation="vertical" />
-<text class="lbl" x={xR + 16} y={midY} text-anchor="start" dy=".35em">R = {fmt(R)} Ω</text>
+<ResistorSymbol cx={xR} cy={midY} length={rw} thickness={rh} orientation="vertical" accent={rOn} />
+<text class="lbl" class:lbl-target={rOn} x={xR + 16} y={midY} text-anchor="start" dy=".35em">R = {fmt(R)} Ω</text>
 
 <line class="wire" x1={xIs} y1={top} x2={xIs} y2={midY - 24} />
 <line class="wire" x1={xIs} y1={midY + 24} x2={xIs} y2={bottom} />

@@ -23,13 +23,13 @@
 
   const initialCategoryId: CategoryId = 'kcl-node';
   let currentCategoryId = $state<CategoryId>(initialCategoryId);
-  let currentProblem = $state<Problem>(generators[initialCategoryId]());
+  let currentProblem = $state<Problem>(generators[initialCategoryId](statsStore.for(initialCategoryId).streak));
   let solved = $state(false);
   let feedback = $state<Feedback | null>(null);
   let view = $state<View>('practice');
 
   function newProblem() {
-    currentProblem = generators[currentCategoryId]();
+    currentProblem = generators[currentCategoryId](statsStore.for(currentCategoryId).streak);
     solved = false;
     feedback = null;
   }

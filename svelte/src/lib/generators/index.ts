@@ -8,7 +8,7 @@ import { generateNodeVoltage } from './nodeVoltage';
 import { generateSeriesVI } from './seriesVI';
 import { generateParallelVI } from './parallelVI';
 
-export const generators: Record<CategoryId, () => Problem> = {
+export const generators: Record<CategoryId, (streak: number) => Problem> = {
   'kcl-node': generateKclNode,
   'kvl-loop': generateKvlLoop,
   series: generateSeries,

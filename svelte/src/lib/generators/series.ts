@@ -2,21 +2,22 @@ import type { Problem } from '../types';
 import { niceInt, pick, rnd } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { difficultyLevel } from '../utils/difficulty';
+import type { ResistorTarget } from '../utils/target';
 
 interface Variant {
   question: string;
   unit: string;
   answer: number;
   extra: string;
+  target: ResistorTarget;
 }
 
-export function generateSeries(): Problem {
+export function generateSeries(streak = 0): Problem {
+  const count = 2 + difficultyLevel(streak);
   const I = rnd(1, 4);
-  const R1 = niceInt(2, 12);
-  const R2 = niceInt(2, 12);
-  const Vs = I * (R1 + R2);
-  const v2 = round2(I * R2);
-  const P1 = round2(I * I * R1);
+  const Rs = Array.from({ length: count }, () => niceInt(2, 12));
+  const Vs = I * Rs.reduce((sum, R) => sum + R, 0);
 
   const variants: Variant[] = [
     {
@@ -24,25 +25,37 @@ export function generateSeries(): Problem {
       unit: 'A',
       answer: I,
       extra: `Dus I = ${fmt(I)} A.`,
-    },
-    {
-      question: `Bereken de spanning v<sub>2</sub> over R<sub>2</sub>.`,
-      unit: 'V',
-      answer: v2,
-      extra: `v<sub>2</sub> = I·R<sub>2</sub> = ${fmt(I)} × ${fmt(R2)} = ${fmt(v2)} V.`,
-    },
-    {
-      question: `Bereken het vermogen P<sub>1</sub> dat R<sub>1</sub> dissipeert.`,
-      unit: 'W',
-      answer: P1,
-      extra: `P<sub>1</sub> = I²·R<sub>1</sub> = ${fmt(I)}² × ${fmt(R1)} = ${fmt(P1)} W.`,
+      target: null,
     },
   ];
+  Rs.forEach((R, i) => {
+    const n = i + 1;
+    const v = round2(I * R);
+    const P = round2(I * I * R);
+    variants.push({
+      question: `Bereken de spanning v<sub>${n}</sub> over R<sub>${n}</sub>.`,
+      unit: 'V',
+      answer: v,
+      extra: `v<sub>${n}</sub> = I·R<sub>${n}</sub> = ${fmt(I)} × ${fmt(R)} = ${fmt(v)} V.`,
+      target: `R${n}`,
+    });
+    variants.push({
+      question: `Bereken het vermogen P<sub>${n}</sub> dat R<sub>${n}</sub> dissipeert.`,
+      unit: 'W',
+      answer: P,
+      extra: `P<sub>${n}</sub> = I²·R<sub>${n}</sub> = ${fmt(I)}² × ${fmt(R)} = ${fmt(P)} W.`,
+      target: `R${n}`,
+    });
+  });
   const variant = pick(variants);
 
+  const sumTerm = Rs.map((_, i) => `R<sub>${i + 1}</sub>`).join(' + ');
+  const sumNums = Rs.map(fmt).join(' + ');
+  const kvlTerms = Rs.map((_, i) => `I·R<sub>${i + 1}</sub>`).join(' − ');
+
   const steps = [
-    `Pas KVL toe rond de lus (met de klok mee vanaf de bron): V<sub>s</sub> − I·R<sub>1</sub> − I·R<sub>2</sub> = 0.`,
-    `I = V<sub>s</sub> / (R<sub>1</sub> + R<sub>2</sub>) = ${fmt(Vs)} / (${fmt(R1)} + ${fmt(R2)}) = ${fmt(I)} A.`,
+    `Pas KVL toe rond de lus (met de klok mee vanaf de bron): V<sub>s</sub> − ${kvlTerms} = 0.`,
+    `I = V<sub>s</sub> / (${sumTerm}) = ${fmt(Vs)} / (${sumNums}) = ${fmt(I)} A.`,
     variant.extra,
   ];
 
@@ -55,6 +68,6 @@ export function generateSeries(): Problem {
     answer: variant.answer,
     tolerance: toleranceFor(variant.answer),
     steps,
-    circuit: { kind: 'series', Vs, R1, R2 },
+    circuit: { kind: 'series', Vs, Rs, target: variant.target },
   };
 }

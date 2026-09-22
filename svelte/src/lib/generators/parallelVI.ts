@@ -2,11 +2,13 @@ import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import type { ResistorTarget } from '../utils/target';
 
 interface Variant {
   question: string;
   unit: string;
   answer: number;
+  target: ResistorTarget;
 }
 
 export function generateParallelVI(): Problem {
@@ -17,9 +19,9 @@ export function generateParallelVI(): Problem {
   const iVs = round2(Is - iR);
 
   const variants: Variant[] = [
-    { question: `Bereken de spanning over de weerstand R (dat is ook de spanning van de bron).`, unit: 'V', answer: Vs },
-    { question: `Bereken de stroom i<sub>R</sub> door de weerstand R.`, unit: 'A', answer: iR },
-    { question: `Bereken de stroom i<sub>v</sub> door de spanningsbron V<sub>s</sub> (via KCL).`, unit: 'A', answer: iVs },
+    { question: `Bereken de spanning over de weerstand R (dat is ook de spanning van de bron).`, unit: 'V', answer: Vs, target: 'R' },
+    { question: `Bereken de stroom i<sub>R</sub> door de weerstand R.`, unit: 'A', answer: iR, target: 'R' },
+    { question: `Bereken de stroom i<sub>v</sub> door de spanningsbron V<sub>s</sub> (via KCL).`, unit: 'A', answer: iVs, target: null },
   ];
   const variant = pick(variants);
 
@@ -39,6 +41,6 @@ export function generateParallelVI(): Problem {
     answer: variant.answer,
     tolerance: toleranceFor(variant.answer),
     steps,
-    circuit: { kind: 'parallel-vi', Vs, R, Is },
+    circuit: { kind: 'parallel-vi', Vs, R, Is, target: variant.target },
   };
 }

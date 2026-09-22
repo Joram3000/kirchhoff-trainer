@@ -1,3 +1,5 @@
+import type { ResistorTarget } from './utils/target';
+
 /** The pedagogical "law" a category exercises — drives accent color and chip label. */
 export type Accent = 'kcl' | 'kvl' | 'mixed';
 
@@ -43,12 +45,12 @@ export interface KvlSideSpec {
 export type CircuitSpec =
   | { kind: 'kcl-node'; branches: KclBranchSpec[] }
   | { kind: 'kvl-loop'; sides: KvlSideSpec[] }
-  | { kind: 'series'; Vs: number; R1: number; R2: number }
-  | { kind: 'parallel'; Is: number; R1: number; R2: number }
-  | { kind: 'mixed'; Vs: number; R1: number; R2: number; R3: number }
+  | { kind: 'series'; Vs: number; Rs: number[]; target: ResistorTarget }
+  | { kind: 'parallel'; Is: number; Rs: number[]; target: ResistorTarget }
+  | { kind: 'mixed'; Vs: number; R1: number; Rs: number[]; target: ResistorTarget }
   | { kind: 'node-voltage'; Is: number; R1: number; R2: number; V2: number }
-  | { kind: 'series-vi'; Vs: number; R: number; Is: number }
-  | { kind: 'parallel-vi'; Vs: number; R: number; Is: number };
+  | { kind: 'series-vi'; Vs: number; R: number; Is: number; target: ResistorTarget }
+  | { kind: 'parallel-vi'; Vs: number; R: number; Is: number; target: ResistorTarget };
 
 /**
  * A fully generated exercise. `question` and `steps` are small trusted HTML

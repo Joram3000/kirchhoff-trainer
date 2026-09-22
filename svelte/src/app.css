@@ -275,6 +275,10 @@ h3 {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+.circuit-card .comp-accent {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
 .circuit-card .node-dot {
   fill: var(--wire);
 }
@@ -287,7 +291,8 @@ h3 {
   font-size: 12px;
   fill: var(--text);
 }
-.circuit-card .lbl-unknown {
+.circuit-card .lbl-unknown,
+.circuit-card .lbl-target {
   fill: var(--accent);
   font-weight: 600;
   font-size: 13px;
@@ -486,10 +491,24 @@ h3 {
 }
 
 .progress-line {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 0.78rem;
   color: var(--text-dim);
   border-top: 1px solid var(--border);
   padding-top: 12px;
+}
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-mixed-soft);
+  color: var(--accent-mixed);
+  font-weight: 600;
+  font-size: 0.72rem;
 }
 
 .scratchpad-card {

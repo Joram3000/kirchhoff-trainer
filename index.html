@@ -284,6 +284,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
   }
+  .circuit-card .comp-accent {
+    stroke: var(--accent);
+    stroke-width: 2.5;
+  }
   .circuit-card .node-dot {
     fill: var(--wire);
   }
@@ -296,7 +300,8 @@
     font-size: 12px;
     fill: var(--text);
   }
-  .circuit-card .lbl-unknown {
+  .circuit-card .lbl-unknown,
+  .circuit-card .lbl-target {
     fill: var(--accent);
     font-weight: 600;
     font-size: 13px;
@@ -914,7 +919,7 @@
   }
 
   /* ---------- SVG primitives ---------- */
-  function resistorH(cx, cy, w, h) {
+  function resistorH(cx, cy, w, h, accent) {
     const pts = [
       [-1, 0],
       [-0.6, -1],
@@ -929,9 +934,9 @@
           `${i === 0 ? "M" : "L"} ${(cx + (p[0] * w) / 2).toFixed(1)} ${(cy + (p[1] * h) / 2).toFixed(1)}`,
       )
       .join(" ");
-    return `<path class="comp" d="${d}"/>`;
+    return `<path class="comp${accent ? " comp-accent" : ""}" d="${d}"/>`;
   }
-  function resistorV(cx, cy, h, w) {
+  function resistorV(cx, cy, h, w, accent) {
     const pts = [
       [0, -1],
       [-1, -0.6],
@@ -946,7 +951,12 @@
           `${i === 0 ? "M" : "L"} ${(cx + (p[0] * w) / 2).toFixed(1)} ${(cy + (p[1] * h) / 2).toFixed(1)}`,
       )
       .join(" ");
-    return `<path class="comp" d="${d}"/>`;
+    return `<path class="comp${accent ? " comp-accent" : ""}" d="${d}"/>`;
+  }
+  // Whether `name` is the resistor the current question variant is asking
+  // about; `target` may be a single name or an array of names.
+  function isTarget(name, target) {
+    return target === name || (Array.isArray(target) && target.includes(name));
   }
   function batteryV(cx, cy, plusAt) {
     const gap = 6,
@@ -1203,7 +1213,7 @@
   }
 
   /* ---------- Generator 3: Serieschakeling ---------- */
-  function svgSeries(p) {
+  function svgSeries(p, target) {
     const top = 60,
       bottom = 230,
       left = 90,
@@ -1211,15 +1221,17 @@
       rw = 80,
       rh = 18,
       bg = 11;
+    const r1On = isTarget("R1", target),
+      r2On = isTarget("R2", target);
     let out = "";
     out += `<line class="wire" x1="${left}" y1="${top}" x2="${190 - rw / 2}" y2="${top}"/>`;
     out += `<line class="wire" x1="${190 + rw / 2}" y1="${top}" x2="${right}" y2="${top}"/>`;
-    out += resistorH(190, top, rw, rh);
-    out += `<text class="lbl" x="190" y="${top - 18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+    out += resistorH(190, top, rw, rh, r1On);
+    out += `<text class="${r1On ? "lbl-target" : "lbl"}" x="190" y="${top - 18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
     out += `<line class="wire" x1="${right}" y1="${top}" x2="${right}" y2="${145 - rw / 2}"/>`;
     out += `<line class="wire" x1="${right}" y1="${145 + rw / 2}" x2="${right}" y2="${bottom}"/>`;
-    out += resistorV(right, 145, rw, rh);
-    out += `<text class="lbl" x="${right + 16}" y="145" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+    out += resistorV(right, 145, rw, rh, r2On);
+    out += `<text class="${r2On ? "lbl-target" : "lbl"}" x="${right + 16}" y="145" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
     out += `<line class="wire" x1="${right}" y1="${bottom}" x2="${left}" y2="${bottom}"/>`;
     out += `<g class="arrow-neutral" transform="translate(190,${bottom}) rotate(180)"><line x1="-11" y1="0" x2="11" y2="0" marker-end="url(#arrowhead-neutral)"/></g>`;
     out += `<text class="lbl" x="190" y="${bottom - 14}" text-anchor="middle">I</text>`;
@@ -1250,18 +1262,21 @@
         unit: "A",
         answer: I,
         extra: `Dus I = ${fmt(I)} A.`,
+        target: null,
       },
       {
         q: `Bereken de spanning v<sub>2</sub> over R<sub>2</sub>.`,
         unit: "V",
         answer: v2,
         extra: `v<sub>2</sub> = I·R<sub>2</sub> = ${fmt(I)} × ${fmt(R2)} = ${fmt(v2)} V.`,
+        target: "R2",
       },
       {
         q: `Bereken het vermogen P<sub>1</sub> dat R<sub>1</sub> dissipeert.`,
         unit: "W",
         answer: P1,
         extra: `P<sub>1</sub> = I²·R<sub>1</sub> = ${fmt(I)}² × ${fmt(R1)} = ${fmt(P1)} W.`,
+        target: "R1",
       },
     ];
     const v = pick(variants);
@@ -1278,12 +1293,12 @@
       answer: v.answer,
       tolerance: Math.max(0.05, Math.abs(v.answer) * 0.02),
       steps,
-      svg: svgSeries({ Vs, R1, R2 }),
+      svg: svgSeries({ Vs, R1, R2 }, v.target),
     };
   }
 
   /* ---------- Generator 4: Parallelschakeling ---------- */
-  function svgParallel(p) {
+  function svgParallel(p, target) {
     const top = 60,
       bottom = 220,
       xIs = 90,
@@ -1291,6 +1306,8 @@
       xR2 = 300,
       rw = 80,
       rh = 18;
+    const r1On = isTarget("R1", target),
+      r2On = isTarget("R2", target);
     let out = "";
     out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xR2}" y2="${top}"/>`;
     out += `<line class="wire" x1="${xIs}" y1="${bottom}" x2="${xR2}" y2="${bottom}"/>`;
@@ -1303,12 +1320,12 @@
     out += `<text class="lbl" x="${xIs - 20}" y="140" text-anchor="end" dy=".35em">I<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Is)} A</text>`;
     out += `<line class="wire" x1="${xR1}" y1="${top}" x2="${xR1}" y2="${140 - rw / 2}"/>`;
     out += `<line class="wire" x1="${xR1}" y1="${140 + rw / 2}" x2="${xR1}" y2="${bottom}"/>`;
-    out += resistorV(xR1, 140, rw, rh);
-    out += `<text class="lbl" x="${xR1 + 16}" y="140" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+    out += resistorV(xR1, 140, rw, rh, r1On);
+    out += `<text class="${r1On ? "lbl-target" : "lbl"}" x="${xR1 + 16}" y="140" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
     out += `<line class="wire" x1="${xR2}" y1="${top}" x2="${xR2}" y2="${140 - rw / 2}"/>`;
     out += `<line class="wire" x1="${xR2}" y1="${140 + rw / 2}" x2="${xR2}" y2="${bottom}"/>`;
-    out += resistorV(xR2, 140, rw, rh);
-    out += `<text class="lbl" x="${xR2 + 16}" y="140" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+    out += resistorV(xR2, 140, rw, rh, r2On);
+    out += `<text class="${r2On ? "lbl-target" : "lbl"}" x="${xR2 + 16}" y="140" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
     out += groundSymbol(195, bottom);
     out += `<text class="hint" x="${(xIs + xR2) / 2}" y="${top - 14}" text-anchor="middle">knooppunt v</text>`;
     return out;
@@ -1327,18 +1344,21 @@
         unit: "V",
         answer: v,
         extra: `Dus v = ${fmt(v)} V.`,
+        target: ["R1", "R2"],
       },
       {
         q: `Bereken de stroom i<sub>1</sub> door R<sub>1</sub>.`,
         unit: "A",
         answer: i1,
         extra: `i<sub>1</sub> = v / R<sub>1</sub> = ${fmt(v)} / ${fmt(R1)} = ${fmt(i1)} A.`,
+        target: "R1",
       },
       {
         q: `Bereken de stroom i<sub>2</sub> door R<sub>2</sub>.`,
         unit: "A",
         answer: i2,
         extra: `i<sub>2</sub> = v / R<sub>2</sub> = ${fmt(v)} / ${fmt(R2)} = ${fmt(i2)} A.`,
+        target: "R2",
       },
     ];
     const q = pick(variants);
@@ -1356,12 +1376,12 @@
       answer: q.answer,
       tolerance: Math.max(0.05, Math.abs(q.answer) * 0.02),
       steps,
-      svg: svgParallel({ Is, R1, R2 }),
+      svg: svgParallel({ Is, R1, R2 }, q.target),
     };
   }
 
   /* ---------- Generator 5: Gemengde schakeling ---------- */
-  function svgMixed(p) {
+  function svgMixed(p, target) {
     const top = 60,
       bottom = 240,
       xVs = 90,
@@ -1370,19 +1390,22 @@
       rw = 70,
       rh = 18,
       bg = 11;
+    const r1On = isTarget("R1", target),
+      r2On = isTarget("R2", target),
+      r3On = isTarget("R3", target);
     let out = "";
     out += `<line class="wire" x1="${xVs}" y1="${top}" x2="${150 - rw / 2}" y2="${top}"/>`;
     out += `<line class="wire" x1="${150 + rw / 2}" y1="${top}" x2="${xC}" y2="${top}"/>`;
-    out += resistorH(150, top, rw, rh);
-    out += `<text class="lbl" x="150" y="${top - 18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
+    out += resistorH(150, top, rw, rh, r1On);
+    out += `<text class="${r1On ? "lbl-target" : "lbl"}" x="150" y="${top - 18}" text-anchor="middle">R<tspan baseline-shift="sub" font-size="9">1</tspan> = ${fmt(p.R1)} Ω</text>`;
     out += `<line class="wire" x1="${xB}" y1="${top}" x2="${xB}" y2="${150 - rw / 2}"/>`;
     out += `<line class="wire" x1="${xB}" y1="${150 + rw / 2}" x2="${xB}" y2="${bottom}"/>`;
-    out += resistorV(xB, 150, rw, rh);
-    out += `<text class="lbl" x="${xB + 16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
+    out += resistorV(xB, 150, rw, rh, r2On);
+    out += `<text class="${r2On ? "lbl-target" : "lbl"}" x="${xB + 16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">2</tspan> = ${fmt(p.R2)} Ω</text>`;
     out += `<line class="wire" x1="${xC}" y1="${top}" x2="${xC}" y2="${150 - rw / 2}"/>`;
     out += `<line class="wire" x1="${xC}" y1="${150 + rw / 2}" x2="${xC}" y2="${bottom}"/>`;
-    out += resistorV(xC, 150, rw, rh);
-    out += `<text class="lbl" x="${xC + 16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">3</tspan> = ${fmt(p.R3)} Ω</text>`;
+    out += resistorV(xC, 150, rw, rh, r3On);
+    out += `<text class="${r3On ? "lbl-target" : "lbl"}" x="${xC + 16}" y="150" text-anchor="start" dy=".35em">R<tspan baseline-shift="sub" font-size="9">3</tspan> = ${fmt(p.R3)} Ω</text>`;
     out += `<line class="wire" x1="${xC}" y1="${bottom}" x2="${xVs}" y2="${bottom}"/>`;
     out += `<line class="wire" x1="${xVs}" y1="${bottom}" x2="${xVs}" y2="${150 + bg}"/>`;
     out += `<line class="wire" x1="${xVs}" y1="${150 - bg}" x2="${xVs}" y2="${top}"/>`;
@@ -1416,24 +1439,28 @@
         unit: "A",
         answer: Itot,
         extra: `Dus I = ${fmt(Itot)} A.`,
+        target: null,
       },
       {
         q: `Bereken de spanning v over de parallelcombinatie van R<sub>2</sub> en R<sub>3</sub>.`,
         unit: "V",
         answer: Vpar,
         extra: `Dus v = ${fmt(Vpar)} V.`,
+        target: ["R2", "R3"],
       },
       {
         q: `Bereken de stroom i<sub>2</sub> door R<sub>2</sub>.`,
         unit: "A",
         answer: i2,
         extra: `i<sub>2</sub> = v/R<sub>2</sub> = ${fmt(Vpar)} / ${fmt(R2)} = ${fmt(i2)} A (KCL: i<sub>2</sub> + i<sub>3</sub> = I).`,
+        target: "R2",
       },
       {
         q: `Bereken de stroom i<sub>3</sub> door R<sub>3</sub>.`,
         unit: "A",
         answer: i3,
         extra: `i<sub>3</sub> = v/R<sub>3</sub> = ${fmt(Vpar)} / ${fmt(R3)} = ${fmt(i3)} A (KCL: i<sub>2</sub> + i<sub>3</sub> = I).`,
+        target: "R3",
       },
     ];
     const q = pick(variants);
@@ -1452,7 +1479,7 @@
       answer: q.answer,
       tolerance: Math.max(0.05, Math.abs(q.answer) * 0.02),
       steps,
-      svg: svgMixed({ Vs, R1, R2, R3 }),
+      svg: svgMixed({ Vs, R1, R2, R3 }, q.target),
     };
   }
 
@@ -1524,7 +1551,7 @@
   }
 
   /* ---------- Generator 7: Bronnen in serie (V + I) ---------- */
-  function svgSeriesVI(p) {
+  function svgSeriesVI(p, target) {
     const top = 60,
       bottom = 230,
       left = 90,
@@ -1532,11 +1559,12 @@
       rw = 80,
       rh = 18,
       bg = 11;
+    const rOn = isTarget("R", target);
     let out = "";
     out += `<line class="wire" x1="${left}" y1="${top}" x2="${190 - rw / 2}" y2="${top}"/>`;
     out += `<line class="wire" x1="${190 + rw / 2}" y1="${top}" x2="${right}" y2="${top}"/>`;
-    out += resistorH(190, top, rw, rh);
-    out += `<text class="lbl" x="190" y="${top - 18}" text-anchor="middle">R = ${fmt(p.R)} Ω</text>`;
+    out += resistorH(190, top, rw, rh, rOn);
+    out += `<text class="${rOn ? "lbl-target" : "lbl"}" x="190" y="${top - 18}" text-anchor="middle">R = ${fmt(p.R)} Ω</text>`;
     out += `<line class="wire" x1="${right}" y1="${top}" x2="${right}" y2="${145 - 24}"/>`;
     out += `<line class="wire" x1="${right}" y1="${145 + 24}" x2="${right}" y2="${bottom}"/>`;
     out += currentSourceSymbol(right, 145, 20, false);
@@ -1569,16 +1597,19 @@
         q: `Bereken de stroom door de spanningsbron V<sub>s</sub>.`,
         unit: "A",
         answer: Is,
+        target: null,
       },
       {
         q: `Bereken de spanning v<sub>R</sub> over de weerstand R.`,
         unit: "V",
         answer: vR,
+        target: "R",
       },
       {
         q: `Bereken de spanning v<sub>x</sub> over de stroombron (via KVL).`,
         unit: "V",
         answer: vx,
+        target: null,
       },
     ];
     const q = pick(variants);
@@ -1596,12 +1627,12 @@
       answer: q.answer,
       tolerance: Math.max(0.05, Math.abs(q.answer) * 0.02),
       steps,
-      svg: svgSeriesVI({ Vs, R, Is }),
+      svg: svgSeriesVI({ Vs, R, Is }, q.target),
     };
   }
 
   /* ---------- Generator 8: Bronnen in parallel (V + I) ---------- */
-  function svgParallelVI(p) {
+  function svgParallelVI(p, target) {
     const top = 60,
       bottom = 220,
       xVs = 90,
@@ -1610,6 +1641,7 @@
       rw = 80,
       rh = 18,
       bg = 11;
+    const rOn = isTarget("R", target);
     let out = "";
     out += `<line class="wire" x1="${xVs}" y1="${top}" x2="${xIs}" y2="${top}"/>`;
     out += `<line class="wire" x1="${xVs}" y1="${bottom}" x2="${xIs}" y2="${bottom}"/>`;
@@ -1622,8 +1654,8 @@
     out += `<text class="lbl" x="${xVs - 20}" y="140" text-anchor="end" dy=".35em">V<tspan baseline-shift="sub" font-size="9">s</tspan> = ${fmt(p.Vs)} V</text>`;
     out += `<line class="wire" x1="${xR}" y1="${top}" x2="${xR}" y2="${140 - rw / 2}"/>`;
     out += `<line class="wire" x1="${xR}" y1="${140 + rw / 2}" x2="${xR}" y2="${bottom}"/>`;
-    out += resistorV(xR, 140, rw, rh);
-    out += `<text class="lbl" x="${xR + 16}" y="140" text-anchor="start" dy=".35em">R = ${fmt(p.R)} Ω</text>`;
+    out += resistorV(xR, 140, rw, rh, rOn);
+    out += `<text class="${rOn ? "lbl-target" : "lbl"}" x="${xR + 16}" y="140" text-anchor="start" dy=".35em">R = ${fmt(p.R)} Ω</text>`;
     out += `<line class="wire" x1="${xIs}" y1="${top}" x2="${xIs}" y2="${140 - 24}"/>`;
     out += `<line class="wire" x1="${xIs}" y1="${140 + 24}" x2="${xIs}" y2="${bottom}"/>`;
     out += currentSourceSymbol(xIs, 140, 20, true);
@@ -1643,16 +1675,19 @@
         q: `Bereken de spanning over de weerstand R (dat is ook de spanning van de bron).`,
         unit: "V",
         answer: Vs,
+        target: "R",
       },
       {
         q: `Bereken de stroom i<sub>R</sub> door de weerstand R.`,
         unit: "A",
         answer: iR,
+        target: "R",
       },
       {
         q: `Bereken de stroom i<sub>v</sub> door de spanningsbron V<sub>s</sub> (via KCL).`,
         unit: "A",
         answer: iVs,
+        target: null,
       },
     ];
     const q = pick(variants);
@@ -1670,7 +1705,7 @@
       answer: q.answer,
       tolerance: Math.max(0.05, Math.abs(q.answer) * 0.02),
       steps,
-      svg: svgParallelVI({ Vs, R, Is }),
+      svg: svgParallelVI({ Vs, R, Is }, q.target),
     };
   }
 

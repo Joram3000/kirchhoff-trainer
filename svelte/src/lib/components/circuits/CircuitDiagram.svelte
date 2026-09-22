@@ -25,17 +25,17 @@
     {:else if circuit.kind === 'kvl-loop'}
       <KvlLoopCircuit sides={circuit.sides} />
     {:else if circuit.kind === 'series'}
-      <SeriesCircuit Vs={circuit.Vs} R1={circuit.R1} R2={circuit.R2} />
+      <SeriesCircuit Vs={circuit.Vs} Rs={circuit.Rs} target={circuit.target} />
     {:else if circuit.kind === 'parallel'}
-      <ParallelCircuit Is={circuit.Is} R1={circuit.R1} R2={circuit.R2} />
+      <ParallelCircuit Is={circuit.Is} Rs={circuit.Rs} target={circuit.target} />
     {:else if circuit.kind === 'mixed'}
-      <MixedCircuit Vs={circuit.Vs} R1={circuit.R1} R2={circuit.R2} R3={circuit.R3} />
+      <MixedCircuit Vs={circuit.Vs} R1={circuit.R1} Rs={circuit.Rs} target={circuit.target} />
     {:else if circuit.kind === 'node-voltage'}
       <NodeVoltageCircuit Is={circuit.Is} R1={circuit.R1} R2={circuit.R2} V2={circuit.V2} />
     {:else if circuit.kind === 'series-vi'}
-      <SeriesViCircuit Vs={circuit.Vs} R={circuit.R} Is={circuit.Is} />
+      <SeriesViCircuit Vs={circuit.Vs} R={circuit.R} Is={circuit.Is} target={circuit.target} />
     {:else if circuit.kind === 'parallel-vi'}
-      <ParallelViCircuit Vs={circuit.Vs} R={circuit.R} Is={circuit.Is} />
+      <ParallelViCircuit Vs={circuit.Vs} R={circuit.R} Is={circuit.Is} target={circuit.target} />
     {/if}
   </g>
 </svg>
