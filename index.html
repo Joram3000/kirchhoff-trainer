@@ -156,9 +156,8 @@
 
   .tabs {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 2px;
     min-width: 0;
   }
   .tab-btn {
@@ -287,6 +286,10 @@
   }
   .circuit-card .node-dot {
     fill: var(--wire);
+  }
+  .circuit-card .node-dot-accent {
+    fill: var(--accent);
+    r: 5.5;
   }
   .circuit-card text {
     font-family: "IBM Plex Mono", monospace;
@@ -494,6 +497,93 @@
     padding-top: 12px;
   }
 
+  .scratchpad-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 20px;
+  }
+  .scratchpad-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .scratchpad-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font-family: "Sora", sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+  }
+  .scratchpad-toggle svg {
+    color: var(--text-dim);
+    transition: transform 0.15s ease;
+    flex: 0 0 auto;
+  }
+  .scratchpad-toggle[aria-expanded="true"] svg {
+    transform: rotate(90deg);
+  }
+  .scratchpad-tools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sp-tool {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .sp-tool.active {
+    background: var(--brand-soft);
+    color: var(--brand);
+    border-color: transparent;
+  }
+  .scratchpad-body {
+    display: flex;
+    flex-direction: column;
+  }
+  .scratchpad-textarea {
+    width: 100%;
+    min-height: 180px;
+    resize: vertical;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--text);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .scratchpad-textarea:focus {
+    outline: 2px solid var(--brand);
+    outline-offset: 1px;
+  }
+  .scratchpad-canvas {
+    width: 100%;
+    height: 260px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    touch-action: none;
+    cursor: crosshair;
+    display: block;
+  }
+
   .theory {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -650,6 +740,50 @@
     </div>
   </main>
 
+  <section class="card scratchpad-card" id="scratchpadCard">
+    <div class="scratchpad-header">
+      <button
+        class="scratchpad-toggle"
+        id="scratchpadToggleBtn"
+        type="button"
+        aria-expanded="false"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+          <path
+            d="M5 3 L11 8 L5 13"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Kladblok
+      </button>
+      <div class="scratchpad-tools hidden" id="scratchpadTools">
+        <button class="sp-tool active" id="spTextModeBtn" type="button">
+          Tekst
+        </button>
+        <button class="sp-tool" id="spDrawModeBtn" type="button">
+          Tekenen
+        </button>
+        <button class="ghost-btn subtle" id="spClearBtn" type="button">
+          Wissen
+        </button>
+      </div>
+    </div>
+    <div class="scratchpad-body hidden" id="scratchpadBody">
+      <textarea
+        id="scratchpadText"
+        class="scratchpad-textarea"
+        placeholder="Reken hier je antwoord uit…"
+      ></textarea>
+      <canvas
+        id="scratchpadCanvas"
+        class="scratchpad-canvas hidden"
+      ></canvas>
+    </div>
+  </section>
+
   <section class="theory hidden" id="theoryView">
     <div class="card">
       <h3>Knooppunt, tak en lus</h3>
@@ -756,6 +890,17 @@
   function pick(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
   }
+  /* Waarden zoals die typisch voorkomen in de opgaven van Dorf & Svoboda
+     hst. 1-2: nette gehele getallen, geen "rare" priemgetallen. */
+  const NICE_NUMBERS = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 16, 18, 20, 22, 24, 25, 26, 28,
+    30, 35, 40, 45, 50, 55, 60, 63, 65, 70, 75, 80, 85, 90, 95, 100,
+  ];
+  function niceInt(min, max) {
+    const pool = NICE_NUMBERS.filter((n) => n >= min && n <= max);
+    if (pool.length === 0) return rnd(min, max);
+    return pick(pool);
+  }
   function round2(n) {
     let r = Math.round(n * 100) / 100;
     if (Object.is(r, -0)) r = 0;
@@ -842,8 +987,8 @@
       `<line class="comp" x1="${cx - 3}" y1="${s + 10}" x2="${cx + 3}" y2="${s + 10}"/>`
     );
   }
-  function dot(x, y) {
-    return `<circle class="node-dot" cx="${x}" cy="${y}" r="4"/>`;
+  function dot(x, y, accent) {
+    return `<circle class="node-dot${accent ? " node-dot-accent" : ""}" cx="${x}" cy="${y}" r="4"/>`;
   }
 
   /* ---------- Generator 1: KCL bij een knooppunt ---------- */
@@ -961,26 +1106,26 @@
   /* ---------- Generator 2: KVL in een lus ---------- */
   function svgKVLLoop(sides) {
     const TL = [110, 60],
-      TR = [310, 60],
-      BR = [310, 220],
+      TR = [280, 60],
+      BR = [280, 220],
       BL = [110, 220];
     const sideGeom = {
       boven: {
-        p20: [150, 46],
-        p80: [270, 46],
-        mid: [210, 38],
+        p20: [144, 46],
+        p80: [246, 46],
+        mid: [195, 38],
         anchor: "middle",
       },
       rechts: {
-        p20: [324, 92],
-        p80: [324, 188],
-        mid: [340, 140],
+        p20: [294, 92],
+        p80: [294, 188],
+        mid: [310, 140],
         anchor: "start",
       },
       onder: {
-        p20: [270, 234],
-        p80: [150, 234],
-        mid: [210, 250],
+        p20: [246, 234],
+        p80: [144, 234],
+        mid: [195, 250],
         anchor: "middle",
       },
       links: { p20: [96, 188], p80: [96, 92], mid: [80, 140], anchor: "end" },
@@ -1001,7 +1146,7 @@
         : `V<tspan baseline-shift="sub" font-size="9">${s.letter}</tspan> = ${fmt(s.value)} V`;
       labels += `<text class="${s.isUnknown ? "lbl-unknown" : "lbl"}" x="${g.mid[0]}" y="${g.mid[1]}" text-anchor="${g.anchor}">${labelText}</text>`;
     });
-    const dirArrow = `<path class="wire" d="M 195 140 A 15 15 0 1 1 194.9 140" fill="none" marker-end="url(#arrowhead-neutral)"/><text class="hint" x="210" y="112" text-anchor="middle">met de klok mee</text>`;
+    const dirArrow = `<path class="wire" d="M 201.76 112.5 A 16 16 0 1 1 181.14 119" fill="none"/><path class="arrow-fill-neutral" d="M 186.14 110.34 L 183.96 120.62 L 178.33 117.38 Z"/><text class="hint" x="195" y="112" text-anchor="middle">met de klok mee</text>`;
     return out + signs + labels + dirArrow;
   }
   function genKVLLoop() {
@@ -1011,7 +1156,7 @@
     const orients = sideNames.map(() =>
       Math.random() < 0.5 ? "stijging" : "daling",
     );
-    const values = sideNames.map(() => rnd(2, 15));
+    const values = sideNames.map(() => niceInt(2, 15));
     let sumKnown = 0;
     const knownParts = [];
     for (let i = 0; i < 4; i++) {
@@ -1094,8 +1239,8 @@
   }
   function genSeries() {
     const I = rnd(1, 4),
-      R1 = rnd(2, 12),
-      R2 = rnd(2, 12);
+      R1 = niceInt(2, 12),
+      R2 = niceInt(2, 12);
     const Vs = I * (R1 + R2);
     const v2 = round2(I * R2),
       P1 = round2(I * I * R1);
@@ -1169,9 +1314,9 @@
     return out;
   }
   function genParallel() {
-    const Is = rnd(3, 15),
-      R1 = rnd(2, 30),
-      R2 = rnd(2, 30);
+    const Is = niceInt(3, 15),
+      R1 = niceInt(2, 30),
+      R2 = niceInt(2, 30);
     const Req = 1 / (1 / R1 + 1 / R2);
     const v = round2(Is * Req),
       i1 = round2(v / R1),
@@ -1256,10 +1401,10 @@
     return out;
   }
   function genMixed() {
-    const Vs = rnd(12, 60),
-      R1 = rnd(2, 25),
-      R2 = rnd(2, 25),
-      R3 = rnd(2, 25);
+    const Vs = niceInt(12, 60),
+      R1 = niceInt(2, 25),
+      R2 = niceInt(2, 25),
+      R3 = niceInt(2, 25);
     const Req23 = 1 / (1 / R2 + 1 / R3);
     const Itot = round2(Vs / (R1 + Req23));
     const Vpar = round2(Itot * Req23);
@@ -1343,22 +1488,22 @@
     out += `<line class="wire" x1="${xIs}" y1="${bottom}" x2="${xN2}" y2="${bottom}"/>`;
     out += groundSymbol(200, bottom);
     out += [
-      [xIs, top],
-      [xR1, top],
-      [xN2, top],
-      [xIs, bottom],
-      [xR1, bottom],
-      [xN2, bottom],
+      [xIs, top, true],
+      [xR1, top, true],
+      [xN2, top, false],
+      [xIs, bottom, false],
+      [xR1, bottom, false],
+      [xN2, bottom, false],
     ]
-      .map((pt) => dot(pt[0], pt[1]))
+      .map((pt) => dot(pt[0], pt[1], pt[2]))
       .join("");
     return out;
   }
   function genNodeVoltage() {
-    const Is = rnd(3, 12),
-      R1 = rnd(2, 20),
-      R2 = rnd(2, 20),
-      V2 = rnd(2, 20);
+    const Is = niceInt(3, 12),
+      R1 = niceInt(2, 20),
+      R2 = niceInt(2, 20),
+      V2 = niceInt(2, 20);
     const v1 = round2((Is + V2 / R2) / (1 / R1 + 1 / R2));
     const steps = [
       `Stel de KCL-vergelijking op in knooppunt 1 (som van de stromen die het knooppunt verlaten = de ingaande bronstroom):`,
@@ -1414,9 +1559,9 @@
     return out;
   }
   function genSeriesVI() {
-    const Is = rnd(2, 10),
-      R = rnd(2, 30),
-      Vs = rnd(10, 60);
+    const Is = niceInt(2, 10),
+      R = niceInt(2, 30),
+      Vs = niceInt(10, 60);
     const vR = round2(Is * R);
     const vx = round2(Vs - vR);
     const variants = [
@@ -1488,9 +1633,9 @@
     return out;
   }
   function genParallelVI() {
-    const Vs = rnd(10, 60),
-      R = rnd(2, 30),
-      Is = rnd(2, 15);
+    const Vs = niceInt(10, 60),
+      R = niceInt(2, 30),
+      Is = niceInt(2, 15);
     const iR = round2(Vs / R);
     const iVs = round2(Is - iR);
     const variants = [
@@ -1766,6 +1911,120 @@
     saveStats();
     renderTabs();
     updateProgressLine();
+  });
+
+  // Scratchpad: rudimentary text + freehand notes, purely local, not tied
+  // to the current problem (nothing here is graded or saved).
+  const scratchpadToggleBtn = document.getElementById("scratchpadToggleBtn");
+  const scratchpadTools = document.getElementById("scratchpadTools");
+  const scratchpadBody = document.getElementById("scratchpadBody");
+  const scratchpadText = document.getElementById("scratchpadText");
+  const scratchpadCanvas = document.getElementById("scratchpadCanvas");
+  const spTextModeBtn = document.getElementById("spTextModeBtn");
+  const spDrawModeBtn = document.getElementById("spDrawModeBtn");
+  const spClearBtn = document.getElementById("spClearBtn");
+  const scratchCtx = scratchpadCanvas.getContext("2d");
+
+  let scratchpadMode = "text";
+  let scratchDrawing = false;
+  let scratchLastX = 0;
+  let scratchLastY = 0;
+
+  function scratchStrokeColor() {
+    return (
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--text")
+        .trim() || "#141a2e"
+    );
+  }
+
+  // Resizing a canvas clears it, so this drops any drawing — acceptable
+  // for a rudimentary scratchpad that isn't meant to persist anyway.
+  function resizeScratchCanvas() {
+    const rect = scratchpadCanvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const dpr = window.devicePixelRatio || 1;
+    scratchpadCanvas.width = Math.max(1, Math.round(rect.width * dpr));
+    scratchpadCanvas.height = Math.max(1, Math.round(rect.height * dpr));
+    scratchCtx.scale(dpr, dpr);
+  }
+
+  function scratchPos(e) {
+    const rect = scratchpadCanvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }
+
+  scratchpadCanvas.addEventListener("pointerdown", (e) => {
+    scratchDrawing = true;
+    scratchpadCanvas.setPointerCapture(e.pointerId);
+    const p = scratchPos(e);
+    scratchLastX = p.x;
+    scratchLastY = p.y;
+  });
+  scratchpadCanvas.addEventListener("pointermove", (e) => {
+    if (!scratchDrawing) return;
+    const p = scratchPos(e);
+    scratchCtx.strokeStyle = scratchStrokeColor();
+    scratchCtx.lineWidth = 2;
+    scratchCtx.lineCap = "round";
+    scratchCtx.lineJoin = "round";
+    scratchCtx.beginPath();
+    scratchCtx.moveTo(scratchLastX, scratchLastY);
+    scratchCtx.lineTo(p.x, p.y);
+    scratchCtx.stroke();
+    scratchLastX = p.x;
+    scratchLastY = p.y;
+  });
+  function stopScratchDrawing() {
+    scratchDrawing = false;
+  }
+  scratchpadCanvas.addEventListener("pointerup", stopScratchDrawing);
+  scratchpadCanvas.addEventListener("pointerleave", stopScratchDrawing);
+  scratchpadCanvas.addEventListener("pointercancel", stopScratchDrawing);
+
+  function setScratchMode(mode) {
+    scratchpadMode = mode;
+    spTextModeBtn.classList.toggle("active", mode === "text");
+    spDrawModeBtn.classList.toggle("active", mode === "draw");
+    scratchpadText.classList.toggle("hidden", mode !== "text");
+    scratchpadCanvas.classList.toggle("hidden", mode !== "draw");
+    if (mode === "draw") requestAnimationFrame(resizeScratchCanvas);
+  }
+  spTextModeBtn.addEventListener("click", () => setScratchMode("text"));
+  spDrawModeBtn.addEventListener("click", () => setScratchMode("draw"));
+
+  function setScratchpadExpanded(expanded) {
+    scratchpadToggleBtn.setAttribute("aria-expanded", String(expanded));
+    scratchpadBody.classList.toggle("hidden", !expanded);
+    scratchpadTools.classList.toggle("hidden", !expanded);
+    if (expanded && scratchpadMode === "draw") {
+      requestAnimationFrame(resizeScratchCanvas);
+    }
+  }
+  scratchpadToggleBtn.addEventListener("click", () => {
+    setScratchpadExpanded(scratchpadBody.classList.contains("hidden"));
+  });
+
+  spClearBtn.addEventListener("click", () => {
+    if (scratchpadMode === "text") {
+      scratchpadText.value = "";
+      scratchpadText.focus();
+    } else {
+      scratchCtx.clearRect(0, 0, scratchpadCanvas.width, scratchpadCanvas.height);
+    }
+  });
+
+  let scratchResizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(scratchResizeTimer);
+    scratchResizeTimer = setTimeout(() => {
+      if (
+        !scratchpadBody.classList.contains("hidden") &&
+        scratchpadMode === "draw"
+      ) {
+        resizeScratchCanvas();
+      }
+    }, 150);
   });
 
   renderTabs();

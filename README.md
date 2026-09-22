@@ -18,3 +18,7 @@ Zes oefencategorieën met willekeurig gegenereerde schema's en cijfers, elk met 
 - Knooppuntspanning (knooppuntspanningsmethode)
 
 Plus een beknopt theorie-overzicht (tab "Theorie") en voortgang per categorie (bijgehouden in de browser, via localStorage).
+
+## Svelte-versie
+
+[`svelte/`](svelte/) bevat een functioneel identieke Svelte 5 + TypeScript + Vite-versie van deze app, opgesplitst in losse modules (generators, circuit-componenten, stores) in plaats van één bestand. Zie [svelte/README.md](svelte/README.md) voor de architectuur en het opstarten.
