@@ -5,8 +5,8 @@
     viewBox="0 0 10 10"
     refX="7.5"
     refY="5"
-    markerWidth="8"
-    markerHeight="8"
+    markerWidth="6.5"
+    markerHeight="6.5"
     orient="auto-start-reverse"
   >
     <path d="M0,0 L10,5 L0,10 Z" class="arrow-fill-neutral" />
@@ -16,8 +16,8 @@
     viewBox="0 0 10 10"
     refX="7.5"
     refY="5"
-    markerWidth="8"
-    markerHeight="8"
+    markerWidth="6.5"
+    markerHeight="6.5"
     orient="auto-start-reverse"
   >
     <path d="M0,0 L10,5 L0,10 Z" class="arrow-fill-accent" />

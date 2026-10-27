@@ -11,3 +11,10 @@ export function fmt(n: number): string {
   if (s === '' || s === '-') s = '0';
   return s.replace('.', ',');
 }
+
+/** Formats with up to `digits` significant digits and a Dutch decimal comma — for equation coefficients. */
+export function fmtSig(n: number, digits = 4): string {
+  let r = Number(n.toPrecision(digits));
+  if (Object.is(r, -0)) r = 0;
+  return String(r).replace('.', ',');
+}

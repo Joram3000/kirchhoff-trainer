@@ -1,11 +1,19 @@
 <script lang="ts">
+  import type { View } from '../../types';
+
   interface Props {
-    showingTheory: boolean;
-    onToggleTheory: () => void;
+    view: View;
+    onNavigate: (view: View) => void;
     onResetStats: () => void;
   }
 
-  let { showingTheory, onToggleTheory, onResetStats }: Props = $props();
+  let { view, onNavigate, onResetStats }: Props = $props();
+
+  const NAV: { id: View; label: string }[] = [
+    { id: 'practice', label: 'Oefenen' },
+    { id: 'theory', label: 'Theorie' },
+    { id: 'exam', label: 'Tentamenhoek' },
+  ];
 </script>
 
 <header class="app-header">
@@ -24,15 +32,17 @@
     </svg>
     <div>
       <h1>Kirchhoff Trainer</h1>
-      <p class="subtitle">KCL &amp; KVL oefenen — stof uit hoofdstuk 1 &amp; 2</p>
+      <p class="subtitle">Elektrische Netwerken 1 — van KCL tot Thévenin en superpositie</p>
     </div>
   </div>
   <div class="header-actions">
-    <button class="ghost-btn" class:active={showingTheory} type="button" onclick={onToggleTheory}>
-      Theorie
-    </button>
-    <button class="ghost-btn subtle" type="button" onclick={onResetStats}>
-      Voortgang wissen
-    </button>
+    <nav class="view-switch" aria-label="Onderdeel">
+      {#each NAV as item (item.id)}
+        <button class="view-btn" class:active={view === item.id} type="button" onclick={() => onNavigate(item.id)}>
+          {item.label}
+        </button>
+      {/each}
+    </nav>
+    <button class="ghost-btn subtle" type="button" onclick={onResetStats}>Voortgang wissen</button>
   </div>
 </header>

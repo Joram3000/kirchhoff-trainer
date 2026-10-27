@@ -2,9 +2,10 @@
   import { CATEGORIES } from './lib/categories';
   import { generators } from './lib/generators';
   import { statsStore } from './lib/stores/stats.svelte';
+  import { examStore } from './lib/stores/exams.svelte';
   import { parseAnswer, isWithinTolerance } from './lib/utils/answer';
   import { fmt } from './lib/utils/format';
-  import type { CategoryId, Problem } from './lib/types';
+  import type { CategoryId, Problem, View } from './lib/types';
 
   import AppHeader from './lib/components/ui/AppHeader.svelte';
   import CategoryTabs from './lib/components/ui/CategoryTabs.svelte';
@@ -12,10 +13,10 @@
   import CircuitCard from './lib/components/ui/CircuitCard.svelte';
   import QuestionCard from './lib/components/ui/QuestionCard.svelte';
   import TheoryView from './lib/components/ui/TheoryView.svelte';
+  import ExamView from './lib/components/exam/ExamView.svelte';
   import Scratchpad from './lib/components/ui/Scratchpad.svelte';
   import AppFooter from './lib/components/ui/AppFooter.svelte';
 
-  type View = 'practice' | 'theory';
   interface Feedback {
     status: 'good' | 'bad';
     message: string;
@@ -60,27 +61,37 @@
     }
   }
 
-  function toggleTheory() {
-    view = view === 'theory' ? 'practice' : 'theory';
+  function resetProgress() {
+    statsStore.resetAll();
+    examStore.resetAll();
   }
 </script>
 
 <div class="app">
-  <AppHeader showingTheory={view === 'theory'} onToggleTheory={toggleTheory} onResetStats={() => statsStore.resetAll()} />
+  <AppHeader {view} onNavigate={(v) => (view = v)} onResetStats={resetProgress} />
 
-  <CategoryTabs categories={CATEGORIES} activeId={currentCategoryId} onSelect={selectCategory} />
-  <LawLegend />
+  {#if view !== 'exam'}
+    <CategoryTabs categories={CATEGORIES} activeId={currentCategoryId} onSelect={selectCategory} />
+    <LawLegend />
+  {/if}
 
   {#if view === 'practice'}
     <main class="layout">
       <CircuitCard problem={currentProblem} />
       <QuestionCard problem={currentProblem} {solved} {feedback} onCheck={checkAnswer} onNext={newProblem} />
     </main>
-  {:else}
+  {:else if view === 'theory'}
     <TheoryView />
   {/if}
 
+  <!-- Kept mounted so filled-in answers survive a quick look at the theory. -->
+  <div hidden={view !== 'exam'}>
+    <ExamView />
+  </div>
+
   <Scratchpad />
 
-  <AppFooter />
+  {#if view === 'practice'}
+    <AppFooter />
+  {/if}
 </div>

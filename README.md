@@ -1,24 +1,30 @@
 # Kirchhoff Trainer
 
-Interactieve oefenapp voor KCL (stroomwet) en KVL (spanningswet) van Kirchhoff, gebaseerd op de basisstof uit hoofdstuk 1 en 2 van Electric Circuits (Dorf & Svoboda) — grootheden, de wetten van Kirchhoff, de wet van Ohm, serie-/parallelschakelingen en de knooppuntspanningsmethode.
+Interactieve oefenapp voor Elektrische Netwerken 1: van de wetten van Kirchhoff tot Thévenin, superpositie en maximale vermogensoverdracht. Gebaseerd op de lesstof van NET1 (week A t/m G) en hoofdstuk 2 van *Electrical Engineering: Principles & Applications* (Hambley).
 
-## Gebruiken
+## Twee versies
 
-Open `index.html` direct in een browser (geen server of build-stap nodig). Alles draait client-side in puur HTML/CSS/JS.
+- **[`svelte/`](svelte/)** — de hoofdversie (Svelte 5 + TypeScript + Vite). Hierin zit alle stof en de tentamenhoek. Zie [svelte/README.md](svelte/README.md) voor opstarten en architectuur.
+- **`index.html`** — de oorspronkelijke statische versie (puur HTML/CSS/JS, direct te openen in een browser). Die bevat alleen de eerste zes categorieën (week A–D).
 
-## Wat erin zit
+## Wat erin zit (Svelte-versie)
 
-Zes oefencategorieën met willekeurig gegenereerde schema's en cijfers, elk met directe feedback en een stapsgewijze uitwerking:
+**Oefenen** — willekeurig gegenereerde schema's en waarden, met directe feedback en een stapsgewijze uitwerking. De categorieën zijn per week gegroepeerd:
 
-- KCL bij een knooppunt
-- KVL in een lus
-- Serieschakeling
-- Parallelschakeling
-- Gemengde schakeling
-- Knooppuntspanning (knooppuntspanningsmethode)
+- Week A–B · Kirchhoff: KCL bij een knooppunt, KVL in een lus, bronnen in serie/parallel (V + I), vermogen & tekenconventie
+- Week C · Weerstandsnetwerken: serie, parallel, gemengd, vervangingsweerstand (ook terugrekenen naar een onbekende R)
+- Week D · Knooppuntspanningsmethode
+- Week E–F · Netwerktheorema's: Thévenin & Norton, maximaal vermogen, superpositie
 
-Plus een beknopt theorie-overzicht (tab "Theorie") en voortgang per categorie (bijgehouden in de browser, via localStorage).
+Bij een reeks goede antwoorden worden de schakelingen groter en lastiger.
 
-## Svelte-versie
+**Theorie** — beknopt overzicht per week, in lijn met het formuleblad.
 
-[`svelte/`](svelte/) bevat een functioneel identieke Svelte 5 + TypeScript + Vite-versie van deze app, opgesplitst in losse modules (generators, circuit-componenten, stores) in plaats van één bestand. Zie [svelte/README.md](svelte/README.md) voor de architectuur en het opstarten.
+**Tentamenhoek** — oefenen zoals op het tentamen: alles invullen en pas aan het eind nakijken, met score, cijferindicatie en uitwerkingen per deelvraag:
+
+- Proeftoets (willekeurig): elke keer een nieuwe toets van 100 punten met alle tentamenonderwerpen
+- Oefentoets DC: de zes opgaven uit de oefentoets van het vak
+- Tentamenvragen week G: de voorbeeldvragen uit les 7
+- Boekopgaven week E en F: P2.80–P2.101 met uitwerkingen
+
+Voortgang en beste scores worden in de browser bewaard (localStorage).

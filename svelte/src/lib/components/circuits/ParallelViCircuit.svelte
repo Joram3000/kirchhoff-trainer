@@ -20,8 +20,8 @@
   const top = 60;
   const bottom = 220;
   const xVs = 90;
-  const xR = 195;
-  const xIs = 290;
+  const xR = 178;
+  const xIs = 278;
   const rw = 80;
   const rh = 18;
   const bg = 11;
@@ -43,7 +43,7 @@
 <line class="wire" x1={xR} y1={top} x2={xR} y2={midY - rw / 2} />
 <line class="wire" x1={xR} y1={midY + rw / 2} x2={xR} y2={bottom} />
 <ResistorSymbol cx={xR} cy={midY} length={rw} thickness={rh} orientation="vertical" accent={rOn} />
-<text class="lbl" class:lbl-target={rOn} x={xR + 16} y={midY} text-anchor="start" dy=".35em">R = {fmt(R)} Ω</text>
+<text class="lbl" class:lbl-target={rOn} x={xR + 12} y={midY} text-anchor="start" dy=".35em">R = {fmt(R)} Ω</text>
 
 <line class="wire" x1={xIs} y1={top} x2={xIs} y2={midY - 24} />
 <line class="wire" x1={xIs} y1={midY + 24} x2={xIs} y2={bottom} />
@@ -52,4 +52,4 @@
 
 <text class="lbl-unknown" x={(xVs + xIs) / 2} y={top - 14} text-anchor="middle">v = V<tspan baseline-shift="sub" font-size="9">s</tspan></text>
 
-<GroundSymbol cx={195} railY={bottom} />
+<GroundSymbol cx={xR} railY={bottom} />

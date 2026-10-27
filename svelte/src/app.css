@@ -14,6 +14,8 @@
   --accent-kvl-soft: #dbeafe;
   --accent-mixed: #7c3aed;
   --accent-mixed-soft: #ede9fe;
+  --accent-theorem: #db2777;
+  --accent-theorem-soft: #fce7f3;
   --good: #15803d;
   --bad: #dc2626;
   --wire: #1e2333;
@@ -37,6 +39,8 @@
     --accent-kvl-soft: rgba(96, 165, 250, 0.14);
     --accent-mixed: #c084fc;
     --accent-mixed-soft: rgba(192, 132, 252, 0.14);
+    --accent-theorem: #f472b6;
+    --accent-theorem-soft: rgba(244, 114, 182, 0.14);
     --good: #4ade80;
     --bad: #f87171;
     --wire: #c7cfe6;
@@ -60,6 +64,8 @@
   --accent-kvl-soft: rgba(96, 165, 250, 0.14);
   --accent-mixed: #c084fc;
   --accent-mixed-soft: rgba(192, 132, 252, 0.14);
+  --accent-theorem: #f472b6;
+  --accent-theorem-soft: rgba(244, 114, 182, 0.14);
   --good: #4ade80;
   --bad: #f87171;
   --wire: #c7cfe6;
@@ -116,8 +122,36 @@ h3 {
 }
 .header-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+}
+.view-switch {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.view-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.view-btn:hover {
+  color: var(--text);
+}
+.view-btn.active {
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: var(--shadow);
 }
 
 .ghost-btn {
@@ -147,9 +181,35 @@ h3 {
 
 .tabs {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.tab-group {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.tab-group-label {
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.tab-group-items {
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
+}
+@media (max-width: 700px) {
+  .tab-group {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
 }
 .tab-btn {
   flex: 0 0 auto;
@@ -162,7 +222,7 @@ h3 {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.82rem;
   font-weight: 500;
-  padding: 9px 14px;
+  padding: 7px 13px;
   border-radius: 999px;
   cursor: pointer;
   white-space: nowrap;
@@ -189,6 +249,9 @@ h3 {
 }
 .tab-dot.mixed {
   background: var(--accent-mixed);
+}
+.tab-dot.theorem {
+  background: var(--accent-theorem);
 }
 .tab-badge {
   font-family: 'IBM Plex Mono', monospace;
@@ -220,6 +283,9 @@ h3 {
 }
 .legend-dot.mixed {
   background: var(--accent-mixed);
+}
+.legend-dot.theorem {
+  background: var(--accent-theorem);
 }
 
 .layout {
@@ -263,24 +329,25 @@ h3 {
 }
 .circuit-card .wire {
   stroke: var(--wire);
-  stroke-width: 2;
+  stroke-width: 1.75;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .circuit-card .comp {
   stroke: var(--wire);
-  stroke-width: 2;
+  stroke-width: 1.75;
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .circuit-card .comp-accent {
   stroke: var(--accent);
-  stroke-width: 2.5;
+  stroke-width: 2.25;
 }
 .circuit-card .node-dot {
   fill: var(--wire);
+  r: 3.5;
 }
 .circuit-card .node-dot-accent {
   fill: var(--accent);
@@ -329,6 +396,25 @@ h3 {
 .circuit-card.accent-mixed {
   --accent: var(--accent-mixed);
 }
+.circuit-card.accent-theorem {
+  --accent: var(--accent-theorem);
+}
+.circuit-card .terminal {
+  fill: var(--surface);
+  stroke: var(--wire);
+  stroke-width: 1.75;
+}
+.circuit-card .switch-contact {
+  fill: var(--surface);
+  stroke: var(--wire);
+  stroke-width: 1.5;
+}
+.circuit-card .box {
+  fill: var(--surface-2);
+}
+.circuit-card .box-name {
+  font-weight: 600;
+}
 .arrow-fill-neutral {
   fill: var(--wire);
 }
@@ -375,6 +461,10 @@ h3 {
 .law-mixed {
   background: var(--accent-mixed-soft);
   color: var(--accent-mixed);
+}
+.law-theorem {
+  background: var(--accent-theorem-soft);
+  color: var(--accent-theorem);
 }
 .question-text {
   font-size: 1rem;
@@ -608,6 +698,15 @@ h3 {
     grid-template-columns: 1fr;
   }
 }
+.theory-heading {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
 .theory .card h3 {
   font-size: 1rem;
   margin-bottom: 8px;
@@ -633,6 +732,261 @@ h3 {
 
 .brand-mark {
   flex: 0 0 auto;
+}
+
+/* ── Tentamenhoek ─────────────────────────────────────────── */
+.exam-home,
+.exam {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.exam-hero h2 {
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+}
+.exam-hero p {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.exam-topics {
+  font-size: 0.82rem !important;
+}
+.exam-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.exam-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.exam-tile:hover {
+  border-color: var(--brand);
+  transform: translateY(-1px);
+}
+.exam-tile.featured {
+  border-color: var(--brand);
+  background: linear-gradient(var(--brand-soft), var(--brand-soft)), var(--surface);
+}
+.exam-tile-title {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.exam-tile-desc {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.exam-tile-meta {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+}
+.exam-best {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-kcl-soft);
+  color: var(--good);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.exam-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.exam-bar-title {
+  flex: 1 1 auto;
+}
+.exam-bar-title h2 {
+  font-size: 1.15rem;
+}
+.exam-score {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+.exam-q {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.exam-q-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.exam-q-head h3 {
+  font-size: 1.02rem;
+}
+.exam-q-points {
+  margin-left: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.exam-q-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .exam-q-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.exam-figure {
+  position: sticky;
+  top: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+@media (max-width: 800px) {
+  .exam-figure {
+    position: static;
+  }
+}
+.exam-q-text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.exam-intro {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.exam-intro sub,
+.exam-part sub,
+.choice sub {
+  font-size: 0.72em;
+}
+.exam-part {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.exam-part.good {
+  border-color: var(--good);
+  background: var(--accent-kcl-soft);
+}
+.exam-part.bad {
+  border-color: var(--bad);
+  background: rgba(220, 38, 38, 0.07);
+}
+.exam-part-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.exam-part-head .question-text {
+  flex: 1 1 auto;
+  font-size: 0.93rem;
+}
+.part-label {
+  flex: 0 0 auto;
+  min-width: 26px;
+  text-align: center;
+  padding: 2px 6px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.part-points {
+  flex: 0 0 auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  padding-top: 2px;
+}
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.choice.picked {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.choice input {
+  accent-color: var(--brand);
+}
+.part-verdict {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.exam-part.good .part-verdict {
+  color: var(--good);
+}
+.exam-part.bad .part-verdict {
+  color: var(--bad);
+}
+.exam-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.exam-progress,
+.exam-final {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+.exam-final b {
+  color: var(--text);
+}
+.exam-actions-buttons {
+  display: flex;
+  gap: 8px;
 }
 footer {
   text-align: center;
