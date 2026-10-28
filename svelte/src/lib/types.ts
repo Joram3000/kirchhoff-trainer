@@ -23,7 +23,7 @@ export type CategoryId =
   | 'superposition';
 
 /** Top-level section of the app. */
-export type View = 'practice' | 'theory' | 'lab' | 'exam';
+export type View = 'practice' | 'lab' | 'exam';
 
 /** Compass-style position of a branch/side around a circuit's central shape. */
 export type Position = 'boven' | 'rechts' | 'onder' | 'links';

@@ -12,7 +12,7 @@
   import LawLegend from './lib/components/ui/LawLegend.svelte';
   import CircuitCard from './lib/components/ui/CircuitCard.svelte';
   import QuestionCard from './lib/components/ui/QuestionCard.svelte';
-  import TheoryView from './lib/components/ui/TheoryView.svelte';
+  import TheoryDrawer from './lib/components/ui/TheoryDrawer.svelte';
   import ExamView from './lib/components/exam/ExamView.svelte';
   import LabView from './lib/components/lab/LabView.svelte';
   import Scratchpad from './lib/components/ui/Scratchpad.svelte';
@@ -29,6 +29,9 @@
   let solved = $state(false);
   let feedback = $state<Feedback | null>(null);
   let view = $state<View>('practice');
+  let theoryOpen = $state(false);
+  /** "C" from "Week C · …", so the theory panel opens at the current exercise's week. */
+  let theoryWeek = $derived(CATEGORIES.find((c) => c.id === currentCategoryId)?.group.split(' · ')[0].replace('Week ', ''));
 
   function show(problem: Problem) {
     currentProblem = problem;
@@ -78,10 +81,16 @@
   }
 </script>
 
-<div class="app">
-  <AppHeader {view} onNavigate={(v) => (view = v)} onResetStats={resetProgress} />
+<div class="app" class:with-theory={theoryOpen}>
+  <AppHeader
+    {view}
+    {theoryOpen}
+    onNavigate={(v) => (view = v)}
+    onToggleTheory={() => (theoryOpen = !theoryOpen)}
+    onResetStats={resetProgress}
+  />
 
-  {#if view === 'practice' || view === 'theory'}
+  {#if view === 'practice'}
     <CategoryTabs categories={CATEGORIES} activeId={currentCategoryId} onSelect={selectCategory} />
     <LawLegend />
   {/if}
@@ -91,8 +100,6 @@
       <CircuitCard problem={currentProblem} />
       <QuestionCard problem={currentProblem} {solved} {feedback} onCheck={checkAnswer} onNext={nextProblem} />
     </main>
-  {:else if view === 'theory'}
-    <TheoryView />
   {/if}
 
   <!-- Kept mounted so filled-in answers and tweaked values survive a quick look elsewhere. -->
@@ -110,3 +117,5 @@
     <AppFooter />
   {/if}
 </div>
+
+<TheoryDrawer open={theoryOpen} week={view === 'practice' ? theoryWeek : undefined} onClose={() => (theoryOpen = false)} />

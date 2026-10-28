@@ -3,7 +3,7 @@
 </script>
 
 <section class="theory">
-  <h2 class="theory-heading">Week A–B · Kirchhoff, Ohm en vermogen</h2>
+  <h2 class="theory-heading" data-week="A–B">Week A–B · Kirchhoff, Ohm en vermogen</h2>
 
   <TheoryCard title="Knooppunt, tak en lus">
     <p><b>Knooppunt</b> — een punt waar twee of meer takken samenkomen.</p>
@@ -67,7 +67,7 @@
     </p>
   </TheoryCard>
 
-  <h2 class="theory-heading">Week C · Weerstandsnetwerken</h2>
+  <h2 class="theory-heading" data-week="C">Week C · Weerstandsnetwerken</h2>
 
   <TheoryCard title="Serie- en parallelschakelingen">
     <div class="formula">R<sub>serie</sub> = R1 + R2 + … + Rn</div>
@@ -105,7 +105,7 @@
     </p>
   </TheoryCard>
 
-  <h2 class="theory-heading">Week D · Knooppuntspanningsmethode</h2>
+  <h2 class="theory-heading" data-week="D">Week D · Knooppuntspanningsmethode</h2>
 
   <TheoryCard title="Knooppuntspanningsmethode">
     <p>
@@ -143,7 +143,7 @@
     </p>
   </TheoryCard>
 
-  <h2 class="theory-heading">Week E–F · Netwerktheorema’s</h2>
+  <h2 class="theory-heading" data-week="E–F">Week E–F · Netwerktheorema’s</h2>
 
   <TheoryCard title="Thévenin- en Norton-equivalent">
     <p>

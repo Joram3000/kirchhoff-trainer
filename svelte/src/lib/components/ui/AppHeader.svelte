@@ -3,15 +3,16 @@
 
   interface Props {
     view: View;
+    theoryOpen: boolean;
     onNavigate: (view: View) => void;
+    onToggleTheory: () => void;
     onResetStats: () => void;
   }
 
-  let { view, onNavigate, onResetStats }: Props = $props();
+  let { view, theoryOpen, onNavigate, onToggleTheory, onResetStats }: Props = $props();
 
   const NAV: { id: View; label: string }[] = [
     { id: 'practice', label: 'Oefenen' },
-    { id: 'theory', label: 'Theorie' },
     { id: 'lab', label: 'Speeltuin' },
     { id: 'exam', label: 'Tentamenhoek' },
   ];
@@ -43,6 +44,10 @@
           {item.label}
         </button>
       {/each}
+      <!-- Theory slides over the current page instead of replacing it. -->
+      <button class="view-btn" class:active={theoryOpen} type="button" aria-expanded={theoryOpen} onclick={onToggleTheory}>
+        Theorie
+      </button>
     </nav>
     <button class="ghost-btn subtle" type="button" onclick={onResetStats}>Voortgang wissen</button>
   </div>

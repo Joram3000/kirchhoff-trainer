@@ -772,6 +772,54 @@ h3 {
     grid-template-columns: 1fr;
   }
 }
+/* Theory as a panel sliding in from the right, over whatever page is open. */
+:root {
+  --theory-width: min(440px, 100vw);
+}
+/* On wide screens the page moves aside so the exercise and the theory sit side by side. */
+@media (min-width: 1100px) {
+  .app.with-theory {
+    margin-right: var(--theory-width);
+    transition: margin-right 0.22s ease;
+  }
+}
+.theory-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  width: var(--theory-width);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -18px 0 40px -20px rgba(0, 0, 0, 0.45);
+}
+.theory-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.theory-drawer-head h2 {
+  font-size: 1.05rem;
+}
+.theory-drawer-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px 18px 32px;
+  overscroll-behavior: contain;
+}
+.theory-drawer .theory {
+  grid-template-columns: minmax(0, 1fr);
+}
+.theory-drawer .theory-heading {
+  scroll-margin-top: 8px;
+}
 .theory-heading {
   grid-column: 1 / -1;
   font-size: 0.8rem;
