@@ -2,6 +2,7 @@ import type { GridElement, GridSpec, Problem, Pt } from '../types';
 import { pick } from '../utils/random';
 import { fmt } from '../utils/format';
 import { difficultyLevel } from '../utils/difficulty';
+import { d, t } from '../utils/tex';
 import { variant, problemFrom, type Built } from './built';
 
 const SERIES_POOL = [2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20] as const;
@@ -13,7 +14,9 @@ const NICE_PAIRS: ReadonlyArray<readonly [number, number]> = [
 ];
 
 const par = (a: number, b: number) => (a * b) / (a + b);
-const parStep = (a: number, b: number) => `${fmt(a)} ∥ ${fmt(b)} = ${fmt(a)}·${fmt(b)}/(${fmt(a)} + ${fmt(b)}) = ${fmt(par(a, b))} Ω`;
+/** "a ∥ b = a·b / (a + b) = c Ω" as TeX; `aligned` puts the first "=" on the alignment point of an aligned block. */
+const parStep = (a: number, b: number, aligned = false) =>
+  t`${a} \parallel ${b} ${aligned ? '&=' : '='} \frac{${a} \cdot ${b}}{${a} + ${b}} = ${par(a, b)}\,\Omega`;
 
 /**
  * A ladder seen from terminals a-b on the left: section k is a series
@@ -51,20 +54,36 @@ function behind(sections: Section[], k: number): { value: number; steps: string[
   const s = sections[k];
   if (k === sections.length - 1) {
     return s.shunts.length === 2
-      ? { value: par(s.shunts[0], s.shunts[1]), steps: [`Verst van de klemmen staan twee weerstanden parallel: ${parStep(s.shunts[0], s.shunts[1])}.`] }
+      ? { value: par(s.shunts[0], s.shunts[1]), steps: [`Verst van de klemmen staan twee weerstanden parallel:${d`${parStep(s.shunts[0], s.shunts[1])}`}`] }
       : { value: s.shunts[0], steps: [`Verst van de klemmen zit alleen de ${fmt(s.shunts[0])} Ω-weerstand.`] };
   }
   const inner = behind(sections, k + 1);
-  const chain = sections[k + 1].series + inner.value;
+  const S = sections[k + 1].series;
+  const chain = S + inner.value;
   const P = s.shunts[0];
   return {
     value: par(P, chain),
     steps: [
       ...inner.steps,
-      `Die staat in serie met ${fmt(sections[k + 1].series)} Ω: ${fmt(sections[k + 1].series)} + ${fmt(inner.value)} = ${fmt(chain)} Ω.`,
-      `Dat geheel staat parallel aan ${fmt(P)} Ω: ${parStep(P, chain)}.`,
+      `Dat staat in serie met ${fmt(S)} Ω, en dat geheel parallel aan ${fmt(P)} Ω:${d`\begin{aligned}
+        ${S} + ${inner.value} &= ${chain}\,\Omega \\
+        ${parStep(P, chain, true)}
+      \end{aligned}`}`,
     ],
   };
+}
+
+/** The ladder as one expression, from the terminals inwards; `unknown` is the series resistor written as R. */
+function structure(sections: Section[], unknown: number | null, k = 0): string {
+  const s = sections[k];
+  const S = k === unknown ? 'R' : t`${s.series}`;
+  const rest =
+    k === sections.length - 1
+      ? s.shunts.length === 2
+        ? t`(${s.shunts[0]} \parallel ${s.shunts[1]})`
+        : t`${s.shunts[0]}`
+      : t`${s.shunts[0]} \parallel \bigl(${structure(sections, unknown, k + 1)}\bigr)`;
+  return `${S} + ${rest}`;
 }
 
 function ladderCircuit(sections: Section[], unknown: number | null): GridSpec {
@@ -113,9 +132,10 @@ export function buildEquivalent(level: number, inverse: boolean): Built {
     return {
       title: 'Vervangingsweerstand',
       steps: [
-        `Werk van <b>ver weg naar de klemmen toe</b>: combineer steeds de weerstanden die zuiver in serie of parallel staan.`,
+        `Schrijf eerst de opbouw op, van de klemmen naar binnen (∥ betekent parallel):${d`R_{ab} = ${structure(sections, null)}`}`,
+        `Werk dan van <b>ver weg naar de klemmen toe</b>: combineer steeds de weerstanden die zuiver in serie of parallel staan.`,
         ...front.steps,
-        `Vooraan staat ${fmt(sections[0].series)} Ω in serie: R<sub>ab</sub> = ${fmt(sections[0].series)} + ${fmt(front.value)} = <b>${fmt(Rab)} Ω</b>.`,
+        `Vooraan staat ${fmt(sections[0].series)} Ω in serie:${d`R_{ab} = ${sections[0].series} + ${front.value} = \boxed{${Rab}\,\Omega}`}`,
       ],
       variants: [variant(`Bepaal de vervangingsweerstand R<sub>ab</sub> tussen de klemmen a en b.`, 'Ω', Rab, [])],
       circuit: ladderCircuit(sections, null),
@@ -124,7 +144,8 @@ export function buildEquivalent(level: number, inverse: boolean): Built {
 
   const u = 1 + Math.floor(Math.random() * (n - 1));
   const steps = [
-    `Nu werk je andersom: <b>pel het netwerk af vanaf de klemmen</b> tot je bij R uitkomt. Serie: trek af. Parallel: 1/R<sub>rest</sub> = 1/R<sub>totaal</sub> − 1/R<sub>parallel</sub>.`,
+    `Schrijf de opbouw op, van de klemmen naar binnen:${d`R_{ab} = ${structure(sections, u)} = ${Rab}\,\Omega`}`,
+    `Werk nu andersom: <b>pel het netwerk af vanaf de klemmen</b> tot je bij R uitkomt. Staat er iets in serie, trek het af. Staat er iets parallel, gebruik${d`\frac{1}{R_{\text{rest}}} = \frac{1}{R_{\text{totaal}}} - \frac{1}{R_{\text{parallel}}}`}`,
   ];
   let cur = Rab;
   for (let j = 0; j < u; j++) {
@@ -133,8 +154,11 @@ export function buildEquivalent(level: number, inverse: boolean): Built {
     const afterSeries = cur - S;
     const rest = (afterSeries * P) / (P - afterSeries);
     steps.push(
-      `${fmt(S)} Ω staat vooraan in serie, dus de rest is samen ${fmt(cur)} − ${fmt(S)} = ${fmt(afterSeries)} Ω.`,
-      `Die ${fmt(afterSeries)} Ω is ${fmt(P)} Ω parallel aan de tak met R: 1/R<sub>tak</sub> = 1/${fmt(afterSeries)} − 1/${fmt(P)} → R<sub>tak</sub> = ${fmt(afterSeries)}·${fmt(P)}/(${fmt(P)} − ${fmt(afterSeries)}) = ${fmt(rest)} Ω.`,
+      `Haal de ${fmt(S)} Ω eraf die vooraan in serie staat; wat overblijft is ${fmt(P)} Ω parallel aan de tak met R:${d`\begin{aligned}
+        ${cur} - ${S} &= ${afterSeries}\,\Omega \\
+        \frac{1}{R_{\text{tak}}} &= \frac{1}{${afterSeries}} - \frac{1}{${P}} \\
+        R_{\text{tak}} &= \frac{${afterSeries} \cdot ${P}}{${P} - ${afterSeries}} = ${rest}\,\Omega
+      \end{aligned}`}`,
     );
     cur = rest;
   }
@@ -143,7 +167,10 @@ export function buildEquivalent(level: number, inverse: boolean): Built {
   steps.push(
     `Reken uit wat er achter R zit:`,
     ...tail.steps,
-    `De tak is R in serie met ${fmt(tail.value)} Ω: R + ${fmt(tail.value)} = ${fmt(cur)} → R = <b>${fmt(R)} Ω</b>.`,
+    `De tak is R in serie met ${fmt(tail.value)} Ω:${d`\begin{aligned}
+      R + ${tail.value} &= ${cur} \\
+      R &= ${cur} - ${tail.value} = \boxed{${R}\,\Omega}
+    \end{aligned}`}`,
   );
 
   return {

@@ -1,5 +1,18 @@
 <script lang="ts">
+  import { tick } from 'svelte';
+  import type { Accent, CircuitSpec } from '../../types';
+  import { evaluate, formatResult } from '../../utils/calc';
+  import CircuitDiagram from '../circuits/CircuitDiagram.svelte';
+
   type Mode = 'text' | 'draw';
+
+  interface Props {
+    /** The current exercise's figure, shown faintly under the drawing canvas to sketch on. */
+    circuit?: CircuitSpec | null;
+    accent?: Accent;
+  }
+
+  let { circuit = null, accent = 'kcl' }: Props = $props();
 
   let expanded = $state(false);
   let mode = $state<Mode>('text');
@@ -80,6 +93,25 @@
     drawing = false;
   }
 
+  /**
+   * Typing "=" after a calculation fills in the result: "5 * 30 =" becomes
+   * "5 * 30 = 150". Only the part after any earlier "=" on the line counts,
+   * so "R = 10 // 5 =" works too.
+   */
+  async function handleInput(e: Event & { currentTarget: HTMLTextAreaElement }) {
+    const el = e.currentTarget;
+    text = el.value;
+    if (!(e instanceof InputEvent) || e.data !== '=') return;
+    const caret = el.selectionStart;
+    const line = text.slice(text.lastIndexOf('\n', caret - 2) + 1, caret - 1);
+    const value = evaluate(line.slice(line.lastIndexOf('=') + 1));
+    if (!Number.isFinite(value)) return;
+    const insert = ` ${formatResult(value)}`;
+    text = text.slice(0, caret) + insert + text.slice(caret);
+    await tick();
+    el.setSelectionRange(caret + insert.length, caret + insert.length);
+  }
+
   function clear() {
     if (mode === 'text') {
       text = '';
@@ -123,18 +155,30 @@
   {#if expanded}
     <div class="scratchpad-body">
       {#if mode === 'text'}
-        <textarea class="scratchpad-textarea" placeholder="Reken hier je antwoord uit…" bind:value={text}
+        <textarea
+          class="scratchpad-textarea"
+          placeholder={'Reken hier je antwoord uit. Typ "=" achter een som en de uitkomst verschijnt:\n5 * 30 = 150\n(12 + 6) / 3 = 6\n10 // 5 = 3,33   (// is parallel)'}
+          value={text}
+          oninput={handleInput}
         ></textarea>
+        <p class="scratchpad-hint">Rekenen: + − * / ^ en haakjes, komma of punt als decimaalteken, <b>//</b> voor weerstanden parallel.</p>
       {:else}
-        <canvas
-          bind:this={canvasEl}
-          class="scratchpad-canvas"
-          onpointerdown={handlePointerDown}
-          onpointermove={handlePointerMove}
-          onpointerup={stopDrawing}
-          onpointerleave={stopDrawing}
-          onpointercancel={stopDrawing}
-        ></canvas>
+        <div class="scratchpad-draw" class:with-figure={circuit}>
+          {#if circuit}
+            <div class="scratchpad-figure circuit-card accent-{accent}" aria-hidden="true">
+              <CircuitDiagram {circuit} />
+            </div>
+          {/if}
+          <canvas
+            bind:this={canvasEl}
+            class="scratchpad-canvas"
+            onpointerdown={handlePointerDown}
+            onpointermove={handlePointerMove}
+            onpointerup={stopDrawing}
+            onpointerleave={stopDrawing}
+            onpointercancel={stopDrawing}
+          ></canvas>
+        </div>
       {/if}
     </div>
   {/if}

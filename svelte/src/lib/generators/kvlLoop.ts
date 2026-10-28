@@ -2,6 +2,7 @@ import type { Position, Problem } from '../types';
 import { niceInt, rnd } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { d, num } from '../utils/tex';
 
 const POSITIONS: Position[] = ['boven', 'rechts', 'onder', 'links'];
 const LETTERS = ['a', 'b', 'c', 'd'];
@@ -23,13 +24,12 @@ export function generateKvlLoop(): Problem {
   const uOrient = orients[unknownIdx];
   const answer = round2(uOrient === 'stijging' ? -sumKnown : sumKnown);
 
-  const termsStr = knownParts.map((k) => `${k.orient === 'stijging' ? '+' : '−'}${fmt(k.value)}`).join(' ');
-  const unknownTerm = uOrient === 'stijging' ? '+ Vx' : '− Vx';
+  const terms = knownParts.map((k) => `${k.orient === 'stijging' ? '+' : '-'} ${num(k.value)}`).join(' ');
+  const unknownTerm = uOrient === 'stijging' ? '+ V_x' : '- V_x';
 
   const steps = [
     `KVL: doorloop de lus met de klok mee. Een <b>spanningsstijging</b> (van − naar +) tel je als <b>positief</b>, een <b>spanningsdaling</b> (van + naar −) als <b>negatief</b>. De som over de hele lus is nul.`,
-    `${termsStr} ${unknownTerm} = 0`,
-    `V<sub>x</sub> = ${fmt(answer)} V`,
+    `Tel alle spanningen rond de lus op en los op:${d`\begin{aligned} ${terms} ${unknownTerm} &= 0 \\ V_x &= \boxed{${answer}\,\mathrm{V}} \end{aligned}`}`,
   ];
 
   return {

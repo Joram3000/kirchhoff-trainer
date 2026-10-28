@@ -10,6 +10,9 @@
 
   let { categories, activeId, onSelect }: Props = $props();
 
+  /** A best streak this long marks a category as mastered. */
+  const MASTERY_STREAK = 5;
+
   let groups = $derived(
     categories.reduce<[string, CategoryMeta[]][]>((acc, cat) => {
       const last = acc[acc.length - 1];
@@ -27,8 +30,17 @@
       <div class="tab-group-items">
         {#each cats as cat (cat.id)}
           {@const stats = statsStore.for(cat.id)}
-          <button class="tab-btn" class:active={cat.id === activeId} type="button" onclick={() => onSelect(cat.id)}>
-            <span class="tab-dot {cat.accent}"></span>{cat.label}{#if stats.attempts > 0}<span class="tab-badge"
+          {@const byStreak = stats.best >= MASTERY_STREAK}
+          {@const mastered = byStreak || !!stats.markedMastered}
+          <button
+            class="tab-btn"
+            class:active={cat.id === activeId}
+            class:mastered
+            type="button"
+            title={byStreak ? `Beheerst: ${stats.best} keer achter elkaar goed` : mastered ? 'Beheerst (zelf aangevinkt)' : undefined}
+            onclick={() => onSelect(cat.id)}
+          >
+            {#if mastered}<span class="tab-check" aria-label="beheerst">✓</span>{:else}<span class="tab-dot {cat.accent}"></span>{/if}{cat.label}{#if stats.attempts > 0}<span class="tab-badge"
                 >{stats.correct}/{stats.attempts}</span
               >{/if}
           </button>

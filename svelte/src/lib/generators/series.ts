@@ -2,6 +2,7 @@ import type { Problem } from '../types';
 import { niceInt, pick, rnd } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { d, num } from '../utils/tex';
 import { difficultyLevel } from '../utils/difficulty';
 import type { ResistorTarget } from '../utils/target';
 
@@ -24,7 +25,7 @@ export function generateSeries(streak = 0): Problem {
       question: `Bereken de stroom I door het circuit.`,
       unit: 'A',
       answer: I,
-      extra: `Dus I = ${fmt(I)} A.`,
+      extra: `Het antwoord:${d`I = \boxed{${I}\,\mathrm{A}}`}`,
       target: null,
     },
   ];
@@ -36,26 +37,26 @@ export function generateSeries(streak = 0): Problem {
       question: `Bereken de spanning v<sub>${n}</sub> over R<sub>${n}</sub>.`,
       unit: 'V',
       answer: v,
-      extra: `v<sub>${n}</sub> = I·R<sub>${n}</sub> = ${fmt(I)} × ${fmt(R)} = ${fmt(v)} V.`,
+      extra: `Wet van Ohm voor R<sub>${n}</sub>:${d`v_${n} = I \cdot R_${n} = ${I} \cdot ${R} = \boxed{${v}\,\mathrm{V}}`}`,
       target: `R${n}`,
     });
     variants.push({
       question: `Bereken het vermogen P<sub>${n}</sub> dat R<sub>${n}</sub> dissipeert.`,
       unit: 'W',
       answer: P,
-      extra: `P<sub>${n}</sub> = I²·R<sub>${n}</sub> = ${fmt(I)}² × ${fmt(R)} = ${fmt(P)} W.`,
+      extra: `Vermogen in R<sub>${n}</sub>:${d`P_${n} = I^2 \cdot R_${n} = ${I}^2 \cdot ${R} = \boxed{${P}\,\mathrm{W}}`}`,
       target: `R${n}`,
     });
   });
   const variant = pick(variants);
 
-  const sumTerm = Rs.map((_, i) => `R<sub>${i + 1}</sub>`).join(' + ');
-  const sumNums = Rs.map(fmt).join(' + ');
-  const kvlTerms = Rs.map((_, i) => `I·R<sub>${i + 1}</sub>`).join(' − ');
+  const sumTerm = Rs.map((_, i) => `R_${i + 1}`).join(' + ');
+  const sumNums = Rs.map(num).join(' + ');
+  const kvlTerms = Rs.map((_, i) => `I R_${i + 1}`).join(' - ');
 
   const steps = [
-    `Pas KVL toe rond de lus (met de klok mee vanaf de bron): V<sub>s</sub> − ${kvlTerms} = 0.`,
-    `I = V<sub>s</sub> / (${sumTerm}) = ${fmt(Vs)} / (${sumNums}) = ${fmt(I)} A.`,
+    `Pas KVL toe rond de lus (met de klok mee vanaf de bron):${d`V_s - ${kvlTerms} = 0`}`,
+    `Door alle weerstanden loopt dezelfde stroom, dus:${d`I = \frac{V_s}{${sumTerm}} = \frac{${Vs}}{${sumNums}} = ${I}\,\mathrm{A}`}`,
     variant.extra,
   ];
 

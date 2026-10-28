@@ -28,6 +28,11 @@ src/
                                 steps, and a CircuitSpec describing what to draw.
       built.ts                  For the newer generators: one circuit with all its questions
                                 (`Built`), turned into a practice Problem or a multi-part exam question.
+    utils/tex.ts               Worked steps write math as TeX between \( \) (inline) or \[ \] (own
+                                line); `m`/`d` tagged templates build it, KaTeX renders it.
+    utils/calc.ts              Safe expression evaluator behind the scratchpad's "type = and get the result".
+    lab/                       The Kirchhoff playground: preset circuits solved live with MNA, giving
+                                node voltages, branch currents, KCL per node and KVL per loop.
     exams/                     The exam corner: the course's oefentoets, the week G exam questions,
                                 Hambley problems from weeks E/F (fixed), and a generated proeftoets.
     stores/stats.svelte.ts     Svelte 5 runes store: per-category attempt/streak stats,

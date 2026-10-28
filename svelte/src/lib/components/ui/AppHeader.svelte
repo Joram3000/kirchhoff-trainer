@@ -12,6 +12,7 @@
   const NAV: { id: View; label: string }[] = [
     { id: 'practice', label: 'Oefenen' },
     { id: 'theory', label: 'Theorie' },
+    { id: 'lab', label: 'Speeltuin' },
     { id: 'exam', label: 'Tentamenhoek' },
   ];
 </script>

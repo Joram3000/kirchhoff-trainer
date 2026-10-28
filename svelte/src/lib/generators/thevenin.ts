@@ -2,27 +2,35 @@ import type { GridElement, GridSpec, Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
 import { fmt } from '../utils/format';
 import { difficultyLevel } from '../utils/difficulty';
+import { m, d, par, result } from '../utils/tex';
 import { variant, problemFrom, abTerminals, ohm, volt, amp, type Built } from './built';
 
 const R_POOL = [2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 24, 30, 40] as const;
 const randR = () => pick(R_POOL);
-const par = (a: number, b: number) => (a * b) / (a + b);
-const p = (n: number) => (n < 0 ? `(${fmt(n)})` : fmt(n));
+const parallel = (a: number, b: number) => (a * b) / (a + b);
 
-/** A two-terminal network with its Thévenin/Norton values and how to find each one. */
+/**
+ * A two-terminal network with its Thévenin/Norton values and how to find
+ * each one. The step builders take `final`: whether that value is the asked
+ * answer (and so gets boxed) or an intermediate result.
+ */
 export interface TwoTerminal {
   title: string;
   circuit: GridSpec;
   Vt: number;
   Rt: number;
   In: number;
-  rtSteps: string[];
-  vtSteps: string[];
-  inSteps: string[];
+  rtSteps: (final: boolean) => string[];
+  vtSteps: (final: boolean) => string[];
+  inSteps: (final: boolean) => string[];
 }
 
-export const PLAN =
-  `Stappenplan: V<sub>t</sub> = open klemspanning v<sub>ab</sub>, I<sub>n</sub> = kortsluitstroom van a naar b, R<sub>t</sub> = vervangingsweerstand gezien vanaf a-b met alle bronnen uit (spanningsbron → kortsluiting, stroombron → open). Altijd geldt V<sub>t</sub> = I<sub>n</sub>·R<sub>t</sub>.`;
+export const PLAN = `Stappenplan voor het Thévenin- en Norton-equivalent:${d`\begin{aligned}
+  V_t &= v_{ab} \text{ bij open klemmen} \\
+  I_n &= \text{kortsluitstroom van a naar b} \\
+  R_t &= \text{vervangingsweerstand vanaf a-b, met alle bronnen uit} \\
+  V_t &= I_n \cdot R_t
+\end{aligned}`}Bronnen uitzetten: een spanningsbron wordt een kortsluiting, een stroombron wordt open.`;
 
 /** Les 5 / P2.83-light: a voltage divider, optionally with a series resistor towards the terminals. */
 function divider(withR3: boolean): TwoTerminal {
@@ -30,7 +38,7 @@ function divider(withR3: boolean): TwoTerminal {
   const R1 = randR();
   const R2 = randR();
   const R3 = withR3 ? randR() : 0;
-  const Rp = par(R1, R2);
+  const Rp = parallel(R1, R2);
   const Vt = (Vs * R2) / (R1 + R2);
   const Rt = Rp + R3;
   const In = Vt / Rt;
@@ -47,24 +55,28 @@ function divider(withR3: boolean): TwoTerminal {
     Vt,
     Rt,
     In,
-    rtSteps: [
-      `Zet de spanningsbron uit (kortsluiting). Vanaf a-b gezien staan R<sub>1</sub> en R<sub>2</sub> dan parallel${withR3 ? `, met R<sub>3</sub> daar in serie mee` : ''}.`,
+    rtSteps: (final) => [
       withR3
-        ? `R<sub>t</sub> = R<sub>1</sub> ∥ R<sub>2</sub> + R<sub>3</sub> = ${fmt(R1)}·${fmt(R2)}/(${fmt(R1)} + ${fmt(R2)}) + ${fmt(R3)} = ${fmt(Rp)} + ${fmt(R3)} = <b>${fmt(Rt)} Ω</b>`
-        : `R<sub>t</sub> = R<sub>1</sub> ∥ R<sub>2</sub> = ${fmt(R1)}·${fmt(R2)}/(${fmt(R1)} + ${fmt(R2)}) = <b>${fmt(Rt)} Ω</b>`,
+        ? `Zet de spanningsbron uit (kortsluiting). Vanaf a-b gezien staan ${m`R_1`} en ${m`R_2`} dan parallel, met ${m`R_3`} daar in serie mee:${d`\begin{aligned}
+            R_t &= R_1 \parallel R_2 + R_3 \\
+                &= \frac{${R1} \cdot ${R2}}{${R1} + ${R2}} + ${R3} = ${Rp} + ${R3} = ${result(Rt, 'Ω', final)}
+          \end{aligned}`}`
+        : `Zet de spanningsbron uit (kortsluiting). Vanaf a-b gezien staan ${m`R_1`} en ${m`R_2`} dan parallel:${d`R_t = R_1 \parallel R_2 = \frac{${R1} \cdot ${R2}}{${R1} + ${R2}} = ${result(Rt, 'Ω', final)}`}`,
     ],
-    vtSteps: [
+    vtSteps: (final) => [
+      `${
+        withR3
+          ? `Met open klemmen loopt er geen stroom door ${m`R_3`}, dus valt er niets over: ${m`V_t`} is de spanning over ${m`R_2`}.`
+          : `Met open klemmen is ${m`V_t`} gewoon de spanning over ${m`R_2`}.`
+      } Spanningsdeler:${d`V_t = V_s \cdot \frac{R_2}{R_1 + R_2} = ${Vs} \cdot \frac{${R2}}{${R1} + ${R2}} = ${result(Vt, 'V', final)}`}`,
+    ],
+    inSteps: (final) =>
       withR3
-        ? `Met open klemmen loopt er geen stroom door R<sub>3</sub>, dus valt er niets over: V<sub>t</sub> is de spanning over R<sub>2</sub>.`
-        : `Met open klemmen is V<sub>t</sub> gewoon de spanning over R<sub>2</sub>.`,
-      `Spanningsdeler: V<sub>t</sub> = V<sub>s</sub>·R<sub>2</sub>/(R<sub>1</sub> + R<sub>2</sub>) = ${fmt(Vs)}·${fmt(R2)}/(${fmt(R1)} + ${fmt(R2)}) = <b>${fmt(Vt)} V</b>`,
-    ],
-    inSteps: withR3
-      ? [`Kortsluitstroom via V<sub>t</sub> en R<sub>t</sub>: I<sub>n</sub> = V<sub>t</sub>/R<sub>t</sub> = ${fmt(Vt)}/${fmt(Rt)} = <b>${fmt(In)} A</b>.`]
-      : [
-          `Sluit a-b kort: R<sub>2</sub> wordt kortgesloten, alle stroom gaat via R<sub>1</sub> door de kortsluiting: I<sub>n</sub> = V<sub>s</sub>/R<sub>1</sub> = ${fmt(Vs)}/${fmt(R1)} = <b>${fmt(In)} A</b>.`,
-          `Controle: V<sub>t</sub>/R<sub>t</sub> = ${fmt(Vt)}/${fmt(Rt)} = ${fmt(In)} A ✓`,
-        ],
+        ? [`Uit ${m`V_t`} en ${m`R_t`}:${d`I_n = \frac{V_t}{R_t} = \frac{${Vt}}{${Rt}} = ${result(In, 'A', final)}`}`]
+        : [
+            `Sluit a-b kort: ${m`R_2`} wordt kortgesloten, dus alle stroom gaat via ${m`R_1`} door de kortsluiting:${d`I_n = \frac{V_s}{R_1} = \frac{${Vs}}{${R1}} = ${result(In, 'A', final)}`}`,
+            `Controle:${d`\frac{V_t}{R_t} = \frac{${Vt}}{${Rt}} = ${In}\,\mathrm{A} \;\checkmark`}`,
+          ],
     circuit: {
       wires: withR3 ? [[[0, 2], [xT, 2]]] : [[[0, 2], [xT, 2]], [[2, 0], [xT, 0]]],
       elements,
@@ -82,29 +94,29 @@ function currentSource(): TwoTerminal {
   const R1 = randR();
   const R2 = randR();
   const R3 = randR();
-  const Rt = par(R3, R1 + R2);
+  const Rt = parallel(R3, R1 + R2);
   const iBranch = (s * R1) / (R1 + R2 + R3);
   const Vt = iBranch * R3;
   const In = (s * R1) / (R1 + R2);
-  const dirNote = up ? '' : ` (de bron wijst naar beneden, dus de stroom is negatief t.o.v. de richting naar a)`;
+  const dirNote = up ? '' : ` De bron wijst naar beneden, dus reken met ${m`I_s = ${s}\,\mathrm{A}`}.`;
 
   return {
     title: 'Thévenin · stroombron',
     Vt,
     Rt,
     In,
-    rtSteps: [
-      `Zet de stroombron uit (open). Vanaf a-b zie je R<sub>3</sub> parallel aan de serieschakeling R<sub>2</sub> + R<sub>1</sub>.`,
-      `R<sub>t</sub> = R<sub>3</sub> ∥ (R<sub>1</sub> + R<sub>2</sub>) = ${fmt(R3)} ∥ ${fmt(R1 + R2)} = ${fmt(R3)}·${fmt(R1 + R2)}/(${fmt(R3)} + ${fmt(R1 + R2)}) = <b>${fmt(Rt)} Ω</b>`,
+    rtSteps: (final) => [
+      `Zet de stroombron uit (open). Vanaf a-b zie je ${m`R_3`} parallel aan de serieschakeling ${m`R_1 + R_2`}:${d`R_t = R_3 \parallel (R_1 + R_2) = \frac{${R3} \cdot ${R1 + R2}}{${R3} + ${R1 + R2}} = ${result(Rt, 'Ω', final)}`}`,
     ],
-    vtSteps: [
-      `Met open klemmen verdeelt de bronstroom zich over R<sub>1</sub> en de tak R<sub>2</sub> + R<sub>3</sub> (stroomdeler)${dirNote}: i = ${p(s)}·${fmt(R1)}/(${fmt(R1)} + ${fmt(R2 + R3)}) = ${fmt(iBranch)} A.`,
-      `V<sub>t</sub> = i·R<sub>3</sub> = ${p(iBranch)}·${fmt(R3)} = <b>${fmt(Vt)} V</b>`,
+    vtSteps: (final) => [
+      `Met open klemmen verdeelt de bronstroom zich over ${m`R_1`} en de tak ${m`R_2 + R_3`} (stroomdeler).${dirNote}${d`\begin{aligned}
+        i_3 &= I_s \cdot \frac{R_1}{R_1 + R_2 + R_3} = ${par(s)} \cdot \frac{${R1}}{${R1 + R2 + R3}} = ${iBranch}\,\mathrm{A} \\
+        V_t &= i_3 \cdot R_3 = ${par(iBranch)} \cdot ${R3} = ${result(Vt, 'V', final)}
+      \end{aligned}`}`,
     ],
-    inSteps: [
-      `Sluit a-b kort: R<sub>3</sub> wordt kortgesloten. De bronstroom verdeelt zich nu over R<sub>1</sub> en R<sub>2</sub>${dirNote}.`,
-      `I<sub>n</sub> = ${p(s)}·R<sub>1</sub>/(R<sub>1</sub> + R<sub>2</sub>) = ${p(s)}·${fmt(R1)}/(${fmt(R1)} + ${fmt(R2)}) = <b>${fmt(In)} A</b>`,
-      `Controle: V<sub>t</sub>/R<sub>t</sub> = ${fmt(Vt)}/${fmt(Rt)} = ${fmt(In)} A ✓`,
+    inSteps: (final) => [
+      `Sluit a-b kort: ${m`R_3`} wordt kortgesloten en de bronstroom verdeelt zich over ${m`R_1`} en ${m`R_2`}.${dirNote}${d`I_n = I_s \cdot \frac{R_1}{R_1 + R_2} = ${par(s)} \cdot \frac{${R1}}{${R1} + ${R2}} = ${result(In, 'A', final)}`}`,
+      `Controle:${d`I_n \cdot R_t = ${par(In)} \cdot ${Rt} = ${Vt}\,\mathrm{V} = V_t \;\checkmark`}`,
     ],
     circuit: {
       wires: [
@@ -132,27 +144,28 @@ function sourceMix(): TwoTerminal {
   const Is = niceInt(1, 5);
   const up = Math.random() < 0.7;
   const s = up ? Is : -Is;
-  const Rt = par(R1, R2);
+  const Rt = parallel(R1, R2);
   const In = Vs / R1 + s;
   const Vt = In * Rt;
+  const sign = up ? '+' : '-';
 
   return {
     title: 'Thévenin · spannings- én stroombron',
     Vt,
     Rt,
     In,
-    rtSteps: [
-      `Spanningsbron kortsluiten, stroombron openen. Vanaf a-b staan R<sub>1</sub> en R<sub>2</sub> dan parallel.`,
-      `R<sub>t</sub> = R<sub>1</sub> ∥ R<sub>2</sub> = ${fmt(R1)}·${fmt(R2)}/(${fmt(R1)} + ${fmt(R2)}) = <b>${fmt(Rt)} Ω</b>`,
+    rtSteps: (final) => [
+      `Spanningsbron kortsluiten, stroombron openen. Vanaf a-b staan ${m`R_1`} en ${m`R_2`} dan parallel:${d`R_t = R_1 \parallel R_2 = \frac{${R1} \cdot ${R2}}{${R1} + ${R2}} = ${result(Rt, 'Ω', final)}`}`,
     ],
-    inSteps: [
-      `Hint: de kortsluitstroom is hier het makkelijkst. Sluit a-b kort: de spanning over R<sub>2</sub> wordt 0, dus door R<sub>2</sub> loopt niets.`,
-      `Via R<sub>1</sub> komt V<sub>s</sub>/R<sub>1</sub> = ${fmt(Vs)}/${fmt(R1)} = ${fmt(Vs / R1)} A; de stroombron ${up ? 'duwt' : 'trekt'} er ${fmt(Is)} A ${up ? 'bij' : 'af'}.`,
-      `I<sub>n</sub> = ${fmt(Vs / R1)} ${up ? '+' : '−'} ${fmt(Is)} = <b>${fmt(In)} A</b>`,
+    inSteps: (final) => [
+      `De kortsluitstroom is hier het makkelijkst. Sluit a-b kort: de spanning over ${m`R_2`} wordt 0, dus door ${m`R_2`} loopt niets. Via ${m`R_1`} komt ${m`V_s/R_1`}, en de stroombron ${up ? 'duwt er' : 'trekt er'} ${fmt(Is)} A ${up ? 'bij' : 'af'}:${d`I_n = \frac{V_s}{R_1} ${sign} I_s = \frac{${Vs}}{${R1}} ${sign} ${Is} = ${result(In, 'A', final)}`}`,
     ],
-    vtSteps: [
-      `Knooppuntvergelijking in a (open klemmen): (V<sub>t</sub> − ${fmt(Vs)})/${fmt(R1)} + V<sub>t</sub>/${fmt(R2)} = ${p(s)}.`,
-      `V<sub>t</sub>·(1/${fmt(R1)} + 1/${fmt(R2)}) = ${fmt(Vs)}/${fmt(R1)} ${up ? '+' : '−'} ${fmt(Is)} → V<sub>t</sub> = ${fmt(In)}·${fmt(Rt)} = <b>${fmt(Vt)} V</b> (dat is precies I<sub>n</sub>·R<sub>t</sub>).`,
+    vtSteps: (final) => [
+      `Knooppuntvergelijking in a, met open klemmen:${d`\begin{aligned}
+        \frac{V_t - ${Vs}}{${R1}} + \frac{V_t}{${R2}} &= ${s} \\
+        V_t \left(\frac{1}{${R1}} + \frac{1}{${R2}}\right) &= \frac{${Vs}}{${R1}} ${sign} ${Is} \\
+        V_t &= ${In} \cdot ${Rt} = ${result(Vt, 'V', final)}
+      \end{aligned}`}Dat is precies ${m`I_n \cdot R_t`}.`,
     ],
     circuit: {
       wires: [
@@ -175,10 +188,11 @@ function sourceMix(): TwoTerminal {
 function twoStage(): TwoTerminal {
   const Vs = niceInt(10, 48);
   const [R1, R2, R3, R4] = [randR(), randR(), randR(), randR()];
-  const loadOnR2 = par(R2, R3 + R4);
+  const p12 = parallel(R1, R2);
+  const loadOnR2 = parallel(R2, R3 + R4);
   const v1 = (Vs * loadOnR2) / (R1 + loadOnR2);
   const Vt = (v1 * R4) / (R3 + R4);
-  const Rt = par(R4, R3 + par(R1, R2));
+  const Rt = parallel(R4, R3 + p12);
   const In = Vt / Rt;
 
   return {
@@ -186,16 +200,20 @@ function twoStage(): TwoTerminal {
     Vt,
     Rt,
     In,
-    rtSteps: [
-      `Spanningsbron kortsluiten. Van links naar rechts: R<sub>1</sub> ∥ R<sub>2</sub> = ${fmt(par(R1, R2))} Ω, in serie met R<sub>3</sub> geeft ${fmt(R3 + par(R1, R2))} Ω, en dat parallel aan R<sub>4</sub>.`,
-      `R<sub>t</sub> = R<sub>4</sub> ∥ (R<sub>3</sub> + R<sub>1</sub> ∥ R<sub>2</sub>) = ${fmt(R4)} ∥ ${fmt(R3 + par(R1, R2))} = <b>${fmt(Rt)} Ω</b>`,
+    rtSteps: (final) => [
+      `Spanningsbron kortsluiten en van links naar rechts combineren:${d`\begin{aligned}
+        R_1 \parallel R_2 &= \frac{${R1} \cdot ${R2}}{${R1} + ${R2}} = ${p12}\,\Omega \\
+        R_t &= R_4 \parallel (R_3 + R_1 \parallel R_2) = ${R4} \parallel ${R3 + p12} = ${result(Rt, 'Ω', final)}
+      \end{aligned}`}`,
     ],
-    vtSteps: [
-      `Open klemmen: R<sub>3</sub> en R<sub>4</sub> staan in serie (${fmt(R3 + R4)} Ω), parallel aan R<sub>2</sub>: ${fmt(R2)} ∥ ${fmt(R3 + R4)} = ${fmt(loadOnR2)} Ω.`,
-      `Spanningsdeler 1: v<sub>1</sub> = ${fmt(Vs)}·${fmt(loadOnR2)}/(${fmt(R1)} + ${fmt(loadOnR2)}) = ${fmt(v1)} V.`,
-      `Spanningsdeler 2: V<sub>t</sub> = v<sub>1</sub>·R<sub>4</sub>/(R<sub>3</sub> + R<sub>4</sub>) = ${fmt(v1)}·${fmt(R4)}/${fmt(R3 + R4)} = <b>${fmt(Vt)} V</b>`,
+    vtSteps: (final) => [
+      `Open klemmen: ${m`R_3`} en ${m`R_4`} staan in serie, en samen parallel aan ${m`R_2`}. Daarna twee keer de spanningsdeler:${d`\begin{aligned}
+        R_2 \parallel (R_3 + R_4) &= ${R2} \parallel ${R3 + R4} = ${loadOnR2}\,\Omega \\
+        v_1 &= ${Vs} \cdot \frac{${loadOnR2}}{${R1} + ${loadOnR2}} = ${v1}\,\mathrm{V} \\
+        V_t &= v_1 \cdot \frac{R_4}{R_3 + R_4} = ${v1} \cdot \frac{${R4}}{${R3 + R4}} = ${result(Vt, 'V', final)}
+      \end{aligned}`}`,
     ],
-    inSteps: [`I<sub>n</sub> = V<sub>t</sub>/R<sub>t</sub> = ${fmt(Vt)}/${fmt(Rt)} = <b>${fmt(In)} A</b>`],
+    inSteps: (final) => [`Uit ${m`V_t`} en ${m`R_t`}:${d`I_n = \frac{V_t}{R_t} = \frac{${Vt}}{${Rt}} = ${result(In, 'A', final)}`}`],
     circuit: {
       wires: [
         [[0, 2], [5, 2]],
@@ -236,10 +254,9 @@ function measured(): Built {
   return {
     title: 'Thévenin · uit een meting',
     steps: [
-      `Model de bron als V<sub>t</sub> in serie met R<sub>t</sub>. Onbelast meet je de open klemspanning, dus V<sub>t</sub> = ${fmt(Vt)} V.`,
-      `Met R<sub>L</sub> = ${fmt(RL)} Ω erop loopt er i = v<sub>L</sub>/R<sub>L</sub> = ${fmt(VL)}/${fmt(RL)} = ${fmt(i)} A.`,
-      `Over R<sub>t</sub> valt het verschil: ${fmt(Vt)} − ${fmt(VL)} = ${fmt(Vt - VL)} V.`,
-      `R<sub>t</sub> = ${fmt(Vt - VL)}/${fmt(i)} = <b>${fmt(Rt)} Ω</b> (of met de spanningsdeler: ${fmt(VL)} = ${fmt(Vt)}·R<sub>L</sub>/(R<sub>t</sub> + R<sub>L</sub>)).`,
+      `Model de bron als ${m`V_t`} in serie met ${m`R_t`}. Onbelast meet je de open klemspanning:${d`V_t = ${Vt}\,\mathrm{V}`}`,
+      `Met ${m`R_L`} erop loopt er:${d`i = \frac{v_L}{R_L} = \frac{${VL}}{${RL}} = ${i}\,\mathrm{A}`}`,
+      `Over ${m`R_t`} valt het verschil tussen beide spanningen:${d`R_t = \frac{V_t - v_L}{i} = \frac{${Vt} - ${VL}}{${i}} = \boxed{${Rt}\,\Omega}`}`,
     ],
     variants: [
       variant(
@@ -275,17 +292,17 @@ function theveninBuilt(t: TwoTerminal): Built {
     title: t.title,
     steps: [PLAN],
     variants: [
-      variant(`Bepaal de Thévenin-weerstand R<sub>t</sub> van het netwerk, gezien vanaf de klemmen a-b.`, 'Ω', t.Rt, t.rtSteps),
-      variant(`Bepaal de Thévenin-spanning V<sub>t</sub> (de open klemspanning v<sub>ab</sub>).`, 'V', t.Vt, t.vtSteps),
-      variant(`Bepaal de Norton-stroom I<sub>n</sub> (de kortsluitstroom van a naar b).`, 'A', t.In, t.inSteps),
+      variant(`Bepaal de Thévenin-weerstand R<sub>t</sub> van het netwerk, gezien vanaf de klemmen a-b.`, 'Ω', t.Rt, t.rtSteps(true)),
+      variant(`Bepaal de Thévenin-spanning V<sub>t</sub> (de open klemspanning v<sub>ab</sub>).`, 'V', t.Vt, t.vtSteps(true)),
+      variant(`Bepaal de Norton-stroom I<sub>n</sub> (de kortsluitstroom van a naar b).`, 'A', t.In, t.inSteps(true)),
       variant(
         `Op a-b wordt een belasting R<sub>L</sub> = ${fmt(RL)} Ω aangesloten. Bepaal de stroom i<sub>L</sub> door R<sub>L</sub> (van a via R<sub>L</sub> naar b).`,
         'A',
         iL,
         [
-          ...t.rtSteps,
-          ...t.vtSteps,
-          `Vervang het netwerk door V<sub>t</sub> in serie met R<sub>t</sub> en hang R<sub>L</sub> eraan: i<sub>L</sub> = V<sub>t</sub>/(R<sub>t</sub> + R<sub>L</sub>) = ${fmt(t.Vt)}/(${fmt(t.Rt)} + ${fmt(RL)}) = <b>${fmt(iL)} A</b>`,
+          ...t.rtSteps(false),
+          ...t.vtSteps(false),
+          `Vervang het netwerk door ${m`V_t`} in serie met ${m`R_t`} en sluit ${m`R_L`} aan:${d`i_L = \frac{V_t}{R_t + R_L} = \frac{${t.Vt}}{${t.Rt} + ${RL}} = \boxed{${iL}\,\mathrm{A}}`}`,
         ],
       ),
     ],

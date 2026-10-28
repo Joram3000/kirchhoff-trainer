@@ -235,6 +235,22 @@ h3 {
   color: var(--bg);
   border-color: var(--text);
 }
+/* Mastered: a best streak of 5 or more in this category. */
+.tab-btn.mastered {
+  background: var(--accent-kcl-soft);
+  border-color: var(--good);
+  color: var(--good);
+}
+.tab-btn.mastered.active {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--bg);
+}
+.tab-check {
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1;
+}
 .tab-dot {
   width: 8px;
   height: 8px;
@@ -579,6 +595,29 @@ h3 {
 .steps-list sub {
   font-size: 0.72em;
 }
+.steps-list li::marker {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.steps-list .katex {
+  font-size: 1.1em;
+}
+.math-block .katex {
+  font-size: 1.22em;
+}
+/* A formula on its own line under the explanation, scrolling sideways on small screens. */
+.math-block {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 0 4px;
+}
+.math-block .katex-display {
+  margin: 0;
+}
+.math-block .katex-display.fleqn > .katex {
+  padding-left: 0.75em;
+}
 
 .progress-line {
   display: flex;
@@ -589,6 +628,15 @@ h3 {
   color: var(--text-dim);
   border-top: 1px solid var(--border);
   padding-top: 12px;
+}
+.mastery-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.mastery-toggle input {
+  accent-color: var(--good);
 }
 .level-badge {
   display: inline-flex;
@@ -677,12 +725,38 @@ h3 {
   outline: 2px solid var(--brand);
   outline-offset: 1px;
 }
-.scratchpad-canvas {
-  width: 100%;
+.scratchpad-hint {
+  margin: 6px 0 0;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+.scratchpad-draw {
+  position: relative;
   height: 260px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: 10px;
+  overflow: hidden;
+}
+.scratchpad-draw.with-figure {
+  height: 380px;
+}
+/* The exercise's figure, faint and untouchable, under the transparent drawing canvas. */
+.scratchpad-figure {
+  position: absolute;
+  inset: 12px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.scratchpad-figure svg {
+  width: 100%;
+  height: 100%;
+}
+.scratchpad-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: transparent;
   touch-action: none;
   cursor: crosshair;
   display: block;
@@ -732,6 +806,204 @@ h3 {
 
 .brand-mark {
   flex: 0 0 auto;
+}
+
+/* ── Speeltuin ─────────────────────────────────────────── */
+/* Currents are green and voltages blue throughout, matching the KCL and KVL accents. */
+.tone-current {
+  color: var(--accent-kcl);
+}
+.tone-voltage {
+  color: var(--accent-kvl);
+}
+.lab-figure {
+  --accent: var(--accent-kcl);
+}
+/* Moving dots along the real direction of the current; one dot spacing per animation cycle. */
+.circuit-card .flow {
+  stroke: var(--accent-kcl);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0 16;
+  animation: current-flow linear infinite;
+}
+@keyframes current-flow {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .circuit-card .flow {
+    animation: none;
+  }
+}
+.lab-animate {
+  margin-top: 6px;
+}
+.circuit-card .lbl-current {
+  fill: var(--accent-kcl);
+  font-weight: 600;
+}
+.circuit-card .lbl-voltage {
+  fill: var(--accent-kvl);
+  font-weight: 600;
+}
+.lab-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+}
+.lab-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.circuit-card .lab-legend svg {
+  width: 22px;
+  height: 10px;
+  flex: none;
+}
+.lab-legend svg path {
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: currentColor;
+}
+.lab-legend b {
+  font-family: 'IBM Plex Mono', monospace;
+}
+.lab-control.lab-V input[type='range'] {
+  accent-color: var(--accent-kvl);
+}
+.lab-control.lab-I input[type='range'] {
+  accent-color: var(--accent-kcl);
+}
+.lab-control.lab-V .lab-unit {
+  color: var(--accent-kvl);
+}
+.lab-control.lab-I .lab-unit {
+  color: var(--accent-kcl);
+}
+.lab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.lab-intro h2 {
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+}
+.lab-intro p,
+.lab-desc {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.lab-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lab-note,
+.lab-sub {
+  margin: 4px 0 8px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.lab-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lab-control {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 70px 18px auto;
+  align-items: center;
+  gap: 10px;
+}
+.lab-control.is-off {
+  opacity: 0.5;
+}
+.lab-control input[type='range'] {
+  accent-color: var(--brand);
+  min-width: 0;
+}
+.lab-number {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  text-align: right;
+}
+.lab-unit {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.lab-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.lab-toggle input {
+  accent-color: var(--brand);
+}
+.lab-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+@media (max-width: 800px) {
+  .lab-results {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.lab-results h3,
+.lab h3 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+.lab-eq .katex {
+  font-size: 1.08em;
+}
+.lab-table-wrap {
+  overflow-x: auto;
+}
+.lab-table {
+  width: 100%;
+  min-width: 520px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+}
+.lab-table th {
+  text-align: left;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.lab-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.lab-in {
+  color: var(--text-dim);
+}
+.lab-out {
+  color: var(--brand);
 }
 
 /* ── Tentamenhoek ─────────────────────────────────────────── */

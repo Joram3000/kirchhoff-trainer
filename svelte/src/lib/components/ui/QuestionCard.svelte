@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Problem } from '../../types';
+  import { renderMath } from '../../utils/tex';
   import LawChip from './LawChip.svelte';
   import AnswerForm from './AnswerForm.svelte';
   import FeedbackBanner from './FeedbackBanner.svelte';
@@ -25,10 +26,10 @@
 <div class="question-card card">
   <LawChip accent={problem.accent} />
   <!-- The question is a trusted HTML fragment generated internally (only <sub>), never user input. -->
-  <p class="question-text">{@html problem.question}</p>
+  <p class="question-text">{@html renderMath(problem.question)}</p>
   <AnswerForm resetKey={problem} unit={problem.unit} disabled={solved} onSubmit={onCheck} />
   <FeedbackBanner {feedback} />
   <StepsPanel resetKey={problem} steps={problem.steps} forceOpen={solved} />
-  <button class="secondary-btn" type="button" onclick={onNext}>Volgende opgave →</button>
+  <button class="secondary-btn" type="button" onclick={onNext}>{problem.next ? 'Volgende stap →' : 'Volgende opgave →'}</button>
   <ProgressLine categoryId={problem.categoryId} />
 </div>

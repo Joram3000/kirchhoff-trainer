@@ -52,7 +52,7 @@ export interface PlacedText {
   /** Baseline shift in em, as the SVG `dy` attribute. */
   dy: number;
   text: string;
-  cls: 'lbl' | 'lbl-target' | 'sign' | 'hint';
+  cls: 'lbl' | 'lbl-target' | 'lbl-current' | 'lbl-voltage' | 'sign' | 'hint';
 }
 
 export interface PlacedArrow {
@@ -77,7 +77,17 @@ export interface PlacedElement {
   arrow: PlacedArrow | null;
 }
 
+/** A stretch of wire or lead with moving dots; `dur` is one dot spacing's travel time, shorter for more current. */
+export interface PlacedFlow {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  dur: number;
+}
+
 export interface GridLayout {
+  flows: PlacedFlow[];
   elements: PlacedElement[];
   wires: string[];
   dots: [number, number][];
@@ -153,8 +163,10 @@ function placeElement(el: GridElement, accent: boolean): PlacedElement {
     const ax = side === 'left' ? cx - off : side === 'right' ? cx + off : cx;
     const ay = side === 'above' ? cy - off : side === 'below' ? cy + off : cy;
     const sign = el.current.toward === 'to' ? 1 : -1;
-    arrow = { x: ax, y: ay, angle: (Math.atan2(uy * sign, ux * sign) * 180) / Math.PI, accent };
-    texts.push(besides(ax, ay, side, side === 'above' ? 13 : 8, el.current.label, accent ? 'lbl-target' : 'lbl'));
+    // A toned arrow is drawn as an accent arrow; the figure's container sets --accent to the current color.
+    arrow = { x: ax, y: ay, angle: (Math.atan2(uy * sign, ux * sign) * 180) / Math.PI, accent: accent || !!el.current.toned };
+    const cls = el.current.toned ? 'lbl-current' : accent ? 'lbl-target' : 'lbl';
+    texts.push(besides(ax, ay, side, side === 'above' ? 13 : 8, el.current.label, cls));
   }
 
   if (el.polarity) {
@@ -226,11 +238,24 @@ export function layoutGrid(spec: GridSpec): GridLayout {
 
   for (const t of spec.texts ?? []) {
     const [x, y] = toPx(t.at);
-    const cls = isHl(t.id) ? 'lbl-target' : (t.style ?? 'lbl');
+    const cls = isHl(t.id) ? 'lbl-target' : t.style === 'voltage' ? 'lbl-voltage' : (t.style ?? 'lbl');
     texts.push({ x, y, anchor: t.anchor ?? 'middle', dy: 0.35, text: t.text, cls });
   }
 
   const ground = spec.ground ? toPx(spec.ground) : null;
+
+  // Moving dots: same speed for the same current everywhere, the largest current at 1,2 s per spacing.
+  const rawFlows: { pts: [number, number, number, number]; amps: number }[] = [
+    ...(spec.flows ?? []).map((f) => ({ pts: [...toPx(f.from), ...toPx(f.to)] as [number, number, number, number], amps: f.amps })),
+    ...elements.flatMap((e) => (e.el.flow === undefined ? [] : e.leads.map((pts) => ({ pts, amps: e.el.flow! })))),
+  ];
+  const maxAmps = Math.max(0, ...rawFlows.map((f) => Math.abs(f.amps)));
+  const flows: PlacedFlow[] = rawFlows
+    .filter((f) => maxAmps > 1e-9 && Math.abs(f.amps) > maxAmps * 1e-3)
+    .map(({ pts: [x1, y1, x2, y2], amps }) => {
+      const dur = Math.min(8, (1.2 * maxAmps) / Math.abs(amps));
+      return amps >= 0 ? { x1, y1, x2, y2, dur } : { x1: x2, y1: y2, x2: x1, y2: y1, dur };
+    });
 
   const boxes: Box[] = [];
   const pointBox = (x: number, y: number, r: number) => boxes.push({ x0: x - r, y0: y - r, x1: x + r, y1: y + r });
@@ -261,7 +286,7 @@ export function layoutGrid(spec: GridSpec): GridLayout {
     x0 -= grow;
     x1 += grow;
   }
-  const viewBox = [x0, y0, x1 - x0, y1 - y0].map((n) => n.toFixed(1)).join(' ');
+  const viewBox = spec.frame ?? [x0, y0, x1 - x0, y1 - y0].map((n) => n.toFixed(1)).join(' ');
 
-  return { elements, wires, dots, terminals, arrows, texts, ground, viewBox };
+  return { flows, elements, wires, dots, terminals, arrows, texts, ground, viewBox };
 }

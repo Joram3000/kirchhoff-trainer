@@ -2,6 +2,7 @@ import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { m, d, num } from '../utils/tex';
 import { difficultyLevel } from '../utils/difficulty';
 import type { ResistorTarget } from '../utils/target';
 
@@ -25,21 +26,21 @@ export function generateMixed(streak = 0): Problem {
 
   const bankNames = Rs.map((_, i) => `R<sub>${i + 2}</sub>`).join(' en ');
   const bankTargets: ResistorTarget = Rs.map((_, i) => `R${i + 2}`);
-  const kclSum = Rs.map((_, i) => `i<sub>${i + 2}</sub>`).join(' + ');
+  const kclSum = Rs.map((_, i) => `i_${i + 2}`).join(' + ');
 
   const variants: Variant[] = [
     {
       question: `Bereken de totale stroom I die uit de bron komt.`,
       unit: 'A',
       answer: Itot,
-      extra: `Dus I = ${fmt(Itot)} A.`,
+      extra: `Het antwoord:${d`I = \boxed{${Itot}\,\mathrm{A}}`}`,
       target: null,
     },
     {
       question: `Bereken de spanning v over de parallelcombinatie van ${bankNames}.`,
       unit: 'V',
       answer: Vpar,
-      extra: `Dus v = ${fmt(Vpar)} V.`,
+      extra: `Het antwoord:${d`v = \boxed{${Vpar}\,\mathrm{V}}`}`,
       target: bankTargets,
     },
   ];
@@ -49,20 +50,19 @@ export function generateMixed(streak = 0): Problem {
       question: `Bereken de stroom i<sub>${n}</sub> door R<sub>${n}</sub>.`,
       unit: 'A',
       answer: currents[i],
-      extra: `i<sub>${n}</sub> = v/R<sub>${n}</sub> = ${fmt(Vpar)} / ${fmt(R)} = ${fmt(currents[i])} A (KCL: ${kclSum} = I).`,
+      extra: `Wet van Ohm voor R<sub>${n}</sub> (controle met KCL: ${m`${kclSum} = I`}):${d`i_${n} = \frac{v}{R_${n}} = \frac{${Vpar}}{${R}} = \boxed{${currents[i]}\,\mathrm{A}}`}`,
       target: `R${n}`,
     });
   });
   const variant = pick(variants);
 
-  const reqTerms = Rs.map((_, i) => `1/R<sub>${i + 2}</sub>`).join(' + ');
-  const reqNums = Rs.map((R) => `1/${fmt(R)}`).join(' + ');
+  const reqTerms = Rs.map((_, i) => `\\frac{1}{R_${i + 2}}`).join(' + ');
+  const reqNums = Rs.map((R) => `\\frac{1}{${num(R)}}`).join(' + ');
 
   const steps = [
-    `Combineer eerst ${bankNames} (parallel) tot één vervangingsweerstand: R<sub>eq</sub> = 1/(${reqTerms}) = 1/(${reqNums}) = ${fmt(Req)} Ω.`,
-    `Pas KVL toe op de resulterende serielus: V<sub>s</sub> − I·R<sub>1</sub> − I·R<sub>eq</sub> = 0.`,
-    `I = V<sub>s</sub> / (R<sub>1</sub> + R<sub>eq</sub>) = ${fmt(Vs)} / (${fmt(R1)} + ${fmt(Req)}) = ${fmt(Itot)} A.`,
-    `v = I · R<sub>eq</sub> = ${fmt(Itot)} × ${fmt(Req)} = ${fmt(Vpar)} V.`,
+    `Combineer eerst ${bankNames} (parallel) tot één vervangingsweerstand:${d`R_{\mathrm{eq}} = \frac{1}{${reqTerms}} = \frac{1}{${reqNums}} = ${Req}\,\Omega`}`,
+    `Pas KVL toe op de serielus die overblijft, en los I op:${d`\begin{aligned} V_s - I R_1 - I R_{\mathrm{eq}} &= 0 \\ I &= \frac{V_s}{R_1 + R_{\mathrm{eq}}} = \frac{${Vs}}{${R1} + ${Req}} = ${Itot}\,\mathrm{A} \end{aligned}`}`,
+    `De spanning over de parallelcombinatie:${d`v = I \cdot R_{\mathrm{eq}} = ${Itot} \cdot ${Req} = ${Vpar}\,\mathrm{V}`}`,
     variant.extra,
   ];
 

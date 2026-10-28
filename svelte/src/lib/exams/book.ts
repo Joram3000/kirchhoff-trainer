@@ -1,5 +1,6 @@
 import type { Exam, ExamQuestion } from '../types';
 import { abTerminals } from '../generators/built';
+import { m, d } from '../utils/tex';
 import { part, choice, grid, sourceWithLoad } from './helpers';
 
 /** Hambley problems assigned in weeks E and F, figures redrawn from the book, answers per the worked solutions. */
@@ -44,13 +45,18 @@ const WEEK_E: ExamQuestion[] = [
     circuit: p280,
     parts: [
       part('a', `Bepaal V<sub>t</sub>.`, 'V', 20 / 3, 3, [
-        `Knooppuntspanning in a (open klemmen): (V<sub>t</sub> − 10)/10 + V<sub>t</sub>/5 − 1 = 0 → V<sub>t</sub> − 10 + 2V<sub>t</sub> − 10 = 0 → 3V<sub>t</sub> = 20.`,
-        `V<sub>t</sub> = <b>6⅔ V ≈ 6,67 V</b>.`,
+        `Knooppuntvergelijking in a, met open klemmen:${d`\begin{aligned}
+          \frac{V_t - 10}{10} + \frac{V_t}{5} - 1 &= 0 \\
+          V_t - 10 + 2V_t - 10 &= 0 \\
+          3V_t &= 20 \;\Rightarrow\; V_t = \boxed{6\tfrac{2}{3}\,\mathrm{V} \approx 6{,}67\,\mathrm{V}}
+        \end{aligned}`}`,
       ]),
-      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 10 / 3, 3, [`Spanningsbron kort, stroombron open: R<sub>t</sub> = 10 ∥ 5 = <b>3⅓ Ω ≈ 3,33 Ω</b>.`]),
+      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 10 / 3, 3, [
+        `Spanningsbron kort, stroombron open:${d`R_t = 10 \parallel 5 = \frac{10 \cdot 5}{10 + 5} = \boxed{3\tfrac{1}{3}\,\Omega \approx 3{,}33\,\Omega}`}`,
+      ]),
       part('c', `Bepaal I<sub>n</sub>.`, 'A', 2, 3, [
-        `I<sub>n</sub> = V<sub>t</sub>/R<sub>t</sub> = 6⅔ / 3⅓ = <b>2 A</b>.`,
-        `Of direct: met a-b kortgesloten is de 5 Ω uitgeschakeld; (10 − 0)/10 + 1 = 2 A ✓`,
+        `Uit ${m`V_t`} en ${m`R_t`}:${d`I_n = \frac{V_t}{R_t} = \frac{6\tfrac{2}{3}}{3\tfrac{1}{3}} = \boxed{2\,\mathrm{A}}`}`,
+        `Of direct: met a-b kortgesloten is de 5 Ω uitgeschakeld:${d`I_n = \frac{10 - 0}{10} + 1 = 2\,\mathrm{A} \;\checkmark`}`,
       ]),
     ],
   },
@@ -62,7 +68,11 @@ const WEEK_E: ExamQuestion[] = [
     circuit: sourceWithLoad('9 V', 'R_t', '100 Ω'),
     parts: [
       part('a', `Bepaal de inwendige weerstand (Thévenin-weerstand) R<sub>t</sub>.`, 'Ω', 50, 3, [
-        `Spanningsdeler: 9·100/(100 + R<sub>t</sub>) = 6 → 900 = 600 + 6R<sub>t</sub> → R<sub>t</sub> = <b>50 Ω</b>.`,
+        `Spanningsdeler over ${m`R_t`} en de 100 Ω:${d`\begin{aligned}
+          9 \cdot \frac{100}{100 + R_t} &= 6 \\
+          900 &= 600 + 6R_t \\
+          R_t &= \boxed{50\,\Omega}
+        \end{aligned}`}`,
       ]),
     ],
   },
@@ -74,14 +84,18 @@ const WEEK_E: ExamQuestion[] = [
     circuit: p282,
     parts: [
       part('a', `Bepaal V<sub>t</sub>.`, 'V', -12, 3, [
-        `De twee 6 Ω-weerstanden staan (bij open klemmen) in serie: 12 Ω, parallel aan 24 Ω: 24 ∥ 12 = 8 Ω.`,
-        `De bron duwt 3 A naar beneden, dus de spanning boven is negatief: v = −3·8 = −24 V.`,
-        `Spanningsdeler over de twee 6 Ω: V<sub>t</sub> = ½·(−24) = <b>−12 V</b>.`,
+        `Bij open klemmen staan de twee 6 Ω-weerstanden in serie (12 Ω), parallel aan 24 Ω. De bron duwt 3 A naar beneden, dus de spanning boven is negatief:${d`\begin{aligned}
+          24 \parallel 12 &= \frac{24 \cdot 12}{24 + 12} = 8\,\Omega \\
+          v &= -3 \cdot 8 = -24\,\mathrm{V}
+        \end{aligned}`}`,
+        `Spanningsdeler over de twee gelijke 6 Ω-weerstanden:${d`V_t = \frac{6}{6 + 6} \cdot (-24) = \boxed{-12\,\mathrm{V}}`}`,
       ]),
-      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 5, 3, [`Stroombron open: (24 + 6) ∥ 6 = 30 ∥ 6 = <b>5 Ω</b>.`]),
+      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 5, 3, [
+        `Stroombron open:${d`R_t = (24 + 6) \parallel 6 = \frac{30 \cdot 6}{30 + 6} = \boxed{5\,\Omega}`}`,
+      ]),
       part('c', `Bepaal I<sub>n</sub>.`, 'A', -2.4, 3, [
-        `Kortsluiting a-b: de rechter 6 Ω valt weg; stroomdeler over 24 Ω en 6 Ω: I<sub>n</sub> = −3·24/(24 + 6) = <b>−2,4 A</b>.`,
-        `Controle: I<sub>n</sub>·R<sub>t</sub> = −2,4·5 = −12 V ✓`,
+        `Kortsluiting a-b: de rechter 6 Ω valt weg. Stroomdeler over 24 Ω en 6 Ω:${d`I_n = -3 \cdot \frac{24}{24 + 6} = \boxed{-2{,}4\,\mathrm{A}}`}`,
+        `Controle:${d`I_n \cdot R_t = -2{,}4 \cdot 5 = -12\,\mathrm{V} = V_t \;\checkmark`}`,
       ]),
     ],
   },
@@ -107,13 +121,20 @@ const WEEK_E: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Bepaal V<sub>t</sub>.`, 'V', 9.6, 3, [
-        `v<sub>1</sub> = 32·(10 ∥ 45)/(10 + 10 ∥ 45) = 32·8,18/18,18 = 14,4 V.`,
-        `V<sub>t</sub> = 14,4·30/(30 + 15) = <b>9,6 V</b>.`,
+        `Twee keer de spanningsdeler. Achter de eerste 10 Ω zit ${m`10 \parallel (15 + 30) = 8{,}18\,\Omega`}:${d`\begin{aligned}
+          v_1 &= 32 \cdot \frac{8{,}18}{10 + 8{,}18} = 14{,}4\,\mathrm{V} \\
+          V_t &= v_1 \cdot \frac{30}{30 + 15} = 14{,}4 \cdot \frac{30}{45} = \boxed{9{,}6\,\mathrm{V}}
+        \end{aligned}`}`,
       ]),
-      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 12, 3, [`R<sub>t</sub> = 30 ∥ (15 + 10 ∥ 10) = 30 ∥ 20 = <b>12 Ω</b>.`]),
+      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 12, 3, [
+        `Spanningsbron kort:${d`R_t = 30 \parallel (15 + 10 \parallel 10) = 30 \parallel 20 = \boxed{12\,\Omega}`}`,
+      ]),
       part('c', `Bepaal I<sub>n</sub>.`, 'A', 0.8, 3, [
-        `Kortsluiting a-b: 30 Ω valt weg; spanning over de middelste 10 Ω: 32·(10 ∥ 15)/(10 + 10 ∥ 15) = 12 V.`,
-        `I<sub>n</sub> = 12/15 = <b>0,8 A</b>. Controle: 0,8·12 = 9,6 V ✓`,
+        `Kortsluiting a-b: de 30 Ω valt weg. Spanning over de middelste 10 Ω, met ${m`10 \parallel 15 = 6\,\Omega`}:${d`\begin{aligned}
+          v_2 &= 32 \cdot \frac{6}{10 + 6} = 12\,\mathrm{V} \\
+          I_n &= \frac{12}{15} = \boxed{0{,}8\,\mathrm{A}}
+        \end{aligned}`}`,
+        `Controle:${d`I_n \cdot R_t = 0{,}8 \cdot 12 = 9{,}6\,\mathrm{V} \;\checkmark`}`,
       ]),
     ],
   },
@@ -142,13 +163,18 @@ const WEEK_E: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Bepaal V<sub>t</sub>.`, 'V', -9, 3, [
-        `Knooppunt links ligt vast op 12 V. KCL in a (de 1 A-bron trekt stroom uit a): 1 + (V<sub>t</sub> − 12)/48 + V<sub>t</sub>/16 = 0.`,
-        `(×48): 48 + V<sub>t</sub> − 12 + 3V<sub>t</sub> = 0 → 4V<sub>t</sub> = −36 → V<sub>t</sub> = <b>−9 V</b>.`,
+        `Het linker knooppunt ligt vast op 12 V. KCL in a, waarbij de 1 A-bron stroom uit a trekt:${d`\begin{aligned}
+          1 + \frac{V_t - 12}{48} + \frac{V_t}{16} &= 0 \quad (\times 48) \\
+          48 + V_t - 12 + 3V_t &= 0 \\
+          4V_t &= -36 \;\Rightarrow\; V_t = \boxed{-9\,\mathrm{V}}
+        \end{aligned}`}`,
       ]),
-      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 12, 3, [`Spanningsbron kort (de 7 Ω valt daardoor weg), stroombron open: R<sub>t</sub> = 48 ∥ 16 = <b>12 Ω</b>.`]),
+      part('b', `Bepaal R<sub>t</sub>.`, 'Ω', 12, 3, [
+        `Spanningsbron kort (de 7 Ω valt daardoor weg), stroombron open:${d`R_t = 48 \parallel 16 = \frac{48 \cdot 16}{48 + 16} = \boxed{12\,\Omega}`}`,
+      ]),
       part('c', `Bepaal I<sub>n</sub>.`, 'A', -0.75, 3, [
-        `Kortsluiting a-b: door 48 Ω loopt (12 − 0)/48 = 0,25 A naar a; de bron trekt er 1 A af.`,
-        `I<sub>n</sub> = 0,25 − 1 = <b>−0,75 A</b>. Controle: −0,75·12 = −9 V ✓`,
+        `Kortsluiting a-b: door 48 Ω loopt stroom naar a, en de bron trekt er 1 A af:${d`I_n = \frac{12 - 0}{48} - 1 = 0{,}25 - 1 = \boxed{-0{,}75\,\mathrm{A}}`}`,
+        `Controle:${d`I_n \cdot R_t = -0{,}75 \cdot 12 = -9\,\mathrm{V} \;\checkmark`}`,
       ]),
       choice(
         'd',
@@ -168,11 +194,13 @@ const WEEK_E: ExamQuestion[] = [
     circuit: sourceWithLoad('12,6 V', 'R_t', '0,1 Ω'),
     parts: [
       part('a', `Bepaal R<sub>t</sub> (in mΩ).`, 'mΩ', 26, 3, [
-        `v<sub>out</sub> = 100·0,1 = 10 V, dus over R<sub>t</sub> valt 12,6 − 10 = 2,6 V.`,
-        `R<sub>t</sub> = 2,6/100 = 0,026 Ω = <b>26 mΩ</b>.`,
+        `De klemspanning onder belasting, en wat er over ${m`R_t`} overblijft:${d`\begin{aligned}
+          v_{\text{uit}} &= 100 \cdot 0{,}1 = 10\,\mathrm{V} \\
+          R_t &= \frac{12{,}6 - 10}{100} = 0{,}026\,\Omega = \boxed{26\,\mathrm{m}\Omega}
+        \end{aligned}`}`,
       ]),
       part('b', `Welke stroom levert de accu bij kortsluiting?`, 'A', 12.6 / 0.026, 3, [
-        `I<sub>sc</sub> = I<sub>n</sub> = 12,6/0,026 = <b>484,6 A</b>. (Het Thévenin-model is hier realistischer: een Norton-model zou ook onbelast intern vermogen verstoken.)`,
+        `${d`I_{sc} = I_n = \frac{12{,}6}{0{,}026} = \boxed{484{,}6\,\mathrm{A}}`}Het Thévenin-model is hier realistischer: een Norton-model zou ook onbelast intern vermogen verstoken.`,
       ]),
     ],
   },
@@ -184,7 +212,10 @@ const WEEK_E: ExamQuestion[] = [
     circuit: sourceWithLoad('15 V', 'R_t', '2 kΩ'),
     parts: [
       part('a', `Bepaal R<sub>t</sub> (in kΩ).`, 'kΩ', 1, 3, [
-        `v<sub>out</sub> = V<sub>t</sub>·R<sub>L</sub>/(R<sub>t</sub> + R<sub>L</sub>) → 10 = 15·2/(R<sub>t</sub> + 2) → R<sub>t</sub> + 2 = 3 → R<sub>t</sub> = <b>1 kΩ</b>.`,
+        `Spanningsdeler (alles in kΩ):${d`\begin{aligned}
+          v_{\text{uit}} &= V_t \cdot \frac{R_L}{R_t + R_L} \\
+          10 &= 15 \cdot \frac{2}{R_t + 2} \;\Rightarrow\; R_t + 2 = 3 \;\Rightarrow\; R_t = \boxed{1\,\mathrm{k}\Omega}
+        \end{aligned}`}`,
       ]),
     ],
   },
@@ -196,9 +227,16 @@ const WEEK_E: ExamQuestion[] = [
     circuit: sourceWithLoad('V_t', 'R_t', 'R_L'),
     parts: (() => {
       const steps = [
-        `Twee keer de spanningsdeler (alles in kΩ): 4,4 = V<sub>t</sub>·2,2/(R<sub>t</sub> + 2,2) en 5 = V<sub>t</sub>·10/(R<sub>t</sub> + 10).`,
-        `Uit de eerste: V<sub>t</sub> = 2·(R<sub>t</sub> + 2,2) = 2R<sub>t</sub> + 4,4. Invullen in de tweede: 5R<sub>t</sub> + 50 = 20R<sub>t</sub> + 44 → R<sub>t</sub> = 0,4 kΩ.`,
-        `V<sub>t</sub> = 2·0,4 + 4,4 = 5,2 V. Controle: 5,2·10/10,4 = 5 V ✓`,
+        `Twee keer de spanningsdeler (alles in kΩ):${d`\left\{\begin{aligned}
+          4{,}4 &= V_t \cdot \frac{2{,}2}{R_t + 2{,}2} \\
+          5 &= V_t \cdot \frac{10}{R_t + 10}
+        \end{aligned}\right.`}`,
+        `Uit de eerste vergelijking volgt ${m`V_t`}; vul die in de tweede in:${d`\begin{aligned}
+          V_t &= 2\,(R_t + 2{,}2) = 2R_t + 4{,}4 \\
+          5\,(R_t + 10) &= 10\,(2R_t + 4{,}4) \\
+          5R_t + 50 &= 20R_t + 44 \;\Rightarrow\; R_t = 0{,}4\,\mathrm{k}\Omega = 400\,\Omega
+        \end{aligned}`}`,
+        `Dan:${d`V_t = 2 \cdot 0{,}4 + 4{,}4 = 5{,}2\,\mathrm{V} \qquad \text{controle: } 5{,}2 \cdot \frac{10}{10{,}4} = 5\,\mathrm{V} \;\checkmark`}`,
       ];
       return [part('a', `Bepaal V<sub>t</sub>.`, 'V', 5.2, 3, steps), part('b', `Bepaal R<sub>t</sub> (in Ω).`, 'Ω', 400, 3, steps)];
     })(),
@@ -210,10 +248,15 @@ const WEEK_E: ExamQuestion[] = [
     intro: `Het netwerk van P2.80. Er wordt een weerstand als belasting op a-b aangesloten.`,
     circuit: p280,
     parts: [
-      part('a', `Voor welke belastingsweerstand is het vermogen maximaal?`, 'Ω', 10 / 3, 2, [`R<sub>L</sub> = R<sub>t</sub> = <b>3⅓ Ω</b>.`]),
+      part('a', `Voor welke belastingsweerstand is het vermogen maximaal?`, 'Ω', 10 / 3, 2, [
+        `Uit P2.80:${d`R_L = R_t = \boxed{3\tfrac{1}{3}\,\Omega}`}`,
+      ]),
       part('b', `Hoe groot is dat maximale vermogen?`, 'W', 10 / 3, 3, [
-        `v<sub>out</sub> = ½·V<sub>t</sub> = 3⅓ V. P<sub>L</sub> = v<sub>out</sub>²/R<sub>L</sub> = (3⅓)²/3⅓ = <b>3⅓ W</b>.`,
-        `Of: V<sub>t</sub>²/(4R<sub>t</sub>) = (6⅔)²/(4·3⅓) = 3⅓ W ✓`,
+        `Met ${m`R_L = R_t`} staat de helft van ${m`V_t`} over de belasting:${d`\begin{aligned}
+          v_{\text{uit}} &= \tfrac{1}{2} V_t = 3\tfrac{1}{3}\,\mathrm{V} \\
+          P_L &= \frac{v_{\text{uit}}^2}{R_L} = \frac{(3\tfrac{1}{3})^2}{3\tfrac{1}{3}} = \boxed{3\tfrac{1}{3}\,\mathrm{W}}
+        \end{aligned}`}`,
+        `Of met de formule:${d`P_{\max} = \frac{V_t^2}{4R_t} = \frac{(6\tfrac{2}{3})^2}{4 \cdot 3\tfrac{1}{3}} = 3\tfrac{1}{3}\,\mathrm{W} \;\checkmark`}`,
       ]),
     ],
   },
@@ -224,9 +267,12 @@ const WEEK_E: ExamQuestion[] = [
     intro: `Het netwerk van P2.82. Er wordt een weerstand als belasting op a-b aangesloten.`,
     circuit: p282,
     parts: [
-      part('a', `Voor welke belastingsweerstand is het vermogen maximaal?`, 'Ω', 5, 2, [`R<sub>L</sub> = R<sub>t</sub> = <b>5 Ω</b>.`]),
+      part('a', `Voor welke belastingsweerstand is het vermogen maximaal?`, 'Ω', 5, 2, [`Uit P2.82:${d`R_L = R_t = \boxed{5\,\Omega}`}`]),
       part('b', `Hoe groot is dat maximale vermogen?`, 'W', 7.2, 3, [
-        `v<sub>out</sub> = ½·(−12) = −6 V. P<sub>L</sub> = (−6)²/5 = <b>7,2 W</b> — het minteken verdwijnt in het kwadraat.`,
+        `Het minteken van ${m`V_t`} verdwijnt in het kwadraat:${d`\begin{aligned}
+          v_{\text{uit}} &= \tfrac{1}{2} \cdot (-12) = -6\,\mathrm{V} \\
+          P_L &= \frac{(-6)^2}{5} = \boxed{7{,}2\,\mathrm{W}}
+        \end{aligned}`}`,
       ]),
     ],
   },
@@ -238,9 +284,11 @@ const WEEK_E: ExamQuestion[] = [
     circuit: sourceWithLoad('V_t = 20 V', 'R_t', 'R_L = 10 Ω'),
     parts: [
       part('a', `Voor welke R<sub>t</sub> is het vermogen in R<sub>L</sub> maximaal?`, 'Ω', 0, 2, [
-        `R<sub>L</sub> = R<sub>t</sub> geldt alleen als R<sub>L</sub> de variabele is. Hier ligt R<sub>L</sub> vast: elk beetje R<sub>t</sub> kost alleen maar vermogen, dus R<sub>t</sub> = <b>0 Ω</b>.`,
+        `${m`R_L = R_t`} geldt alleen als ${m`R_L`} de variabele is. Hier ligt ${m`R_L`} vast: elk beetje ${m`R_t`} kost alleen maar vermogen.${d`R_t = \boxed{0\,\Omega}`}`,
       ]),
-      part('b', `Hoe groot is dat maximale vermogen?`, 'W', 40, 3, [`P = V<sub>t</sub>²/R<sub>L</sub> = 20²/10 = <b>40 W</b>.`]),
+      part('b', `Hoe groot is dat maximale vermogen?`, 'W', 40, 3, [
+        `Met ${m`R_t = 0`} staat de volle bronspanning over de belasting:${d`P = \frac{V_t^2}{R_L} = \frac{20^2}{10} = \boxed{40\,\mathrm{W}}`}`,
+      ]),
     ],
   },
 ];
@@ -266,9 +314,13 @@ const WEEK_F: ExamQuestion[] = [
       ground: [2, 2],
     }),
     parts: [
-      part('a', `Bepaal i<sub>v</sub> (alleen de spanningsbron).`, 'A', 2, 2, [`Stroombron open: i<sub>v</sub> = 30/(10 + 5) = <b>2 A</b>.`]),
-      part('b', `Bepaal i<sub>c</sub> (alleen de stroombron).`, 'A', 2, 2, [`Spanningsbron kort: stroomdeler i<sub>c</sub> = 3·10/(5 + 10) = <b>2 A</b>.`]),
-      part('c', `Bepaal i.`, 'A', 4, 2, [`i = i<sub>v</sub> + i<sub>c</sub> = <b>4 A</b>.`]),
+      part('a', `Bepaal i<sub>v</sub> (alleen de spanningsbron).`, 'A', 2, 2, [
+        `Stroombron open: 10 Ω en 5 Ω staan in serie.${d`i_v = \frac{30}{10 + 5} = \boxed{2\,\mathrm{A}}`}`,
+      ]),
+      part('b', `Bepaal i<sub>c</sub> (alleen de stroombron).`, 'A', 2, 2, [
+        `Spanningsbron kort: 10 Ω en 5 Ω staan parallel, dus een stroomdeler:${d`i_c = 3 \cdot \frac{10}{5 + 10} = \boxed{2\,\mathrm{A}}`}`,
+      ]),
+      part('c', `Bepaal i.`, 'A', 4, 2, [`Tel op:${d`i = i_v + i_c = 2 + 2 = \boxed{4\,\mathrm{A}}`}`]),
     ],
   },
   {
@@ -299,14 +351,15 @@ const WEEK_F: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Alleen de stroombron (spanningsbron kortgesloten): bepaal i<sub>s1</sub>.`, 'A', -2 / 3, 2, [
-        `De bovenste 5 Ω is kortgesloten. De 1 A verdeelt zich over de linker 5 Ω en de 10 Ω; naar de linker 5 Ω gaat 1·10/15 = ⅔ A, en die moet naar links door de kortsluiting.`,
-        `i<sub>s1</sub> = <b>−⅔ A ≈ −0,67 A</b>.`,
+        `De bovenste 5 Ω is kortgesloten. De 1 A verdeelt zich over de linker 5 Ω en de 10 Ω; het deel naar de linker 5 Ω moet naar links door de kortsluiting, tegen de pijl in:${d`i_{s1} = -1 \cdot \frac{10}{5 + 10} = \boxed{-\tfrac{2}{3}\,\mathrm{A} \approx -0{,}67\,\mathrm{A}}`}`,
       ]),
       part('b', `Alleen de spanningsbron (stroombron open): bepaal i<sub>s2</sub>.`, 'A', -8 / 3, 2, [
-        `Door de bovenste 5 Ω (direct over de bron): i<sub>a</sub> = 10/5 = 2 A. Door de lus 5 Ω + 10 Ω: i<sub>b</sub> = 10/15 = ⅔ A.`,
-        `KCL in v<sub>1</sub>: i<sub>a</sub> + i<sub>b</sub> + i<sub>s2</sub> = 0 → i<sub>s2</sub> = <b>−2⅔ A ≈ −2,67 A</b>.`,
+        `Door de bovenste 5 Ω (direct over de bron) en door de lus 5 Ω + 10 Ω:${d`i_a = \frac{10}{5} = 2\,\mathrm{A} \qquad i_b = \frac{10}{5 + 10} = \tfrac{2}{3}\,\mathrm{A}`}`,
+        `KCL in ${m`v_1`}:${d`i_a + i_b + i_{s2} = 0 \;\Rightarrow\; i_{s2} = \boxed{-2\tfrac{2}{3}\,\mathrm{A} \approx -2{,}67\,\mathrm{A}}`}`,
       ]),
-      part('c', `Bepaal i<sub>s</sub>.`, 'A', -10 / 3, 2, [`i<sub>s</sub> = −⅔ − 2⅔ = <b>−3⅓ A ≈ −3,33 A</b>.`]),
+      part('c', `Bepaal i<sub>s</sub>.`, 'A', -10 / 3, 2, [
+        `Tel op:${d`i_s = i_{s1} + i_{s2} = -\tfrac{2}{3} - 2\tfrac{2}{3} = \boxed{-3\tfrac{1}{3}\,\mathrm{A} \approx -3{,}33\,\mathrm{A}}`}`,
+      ]),
     ],
   },
   {
@@ -331,12 +384,13 @@ const WEEK_F: ExamQuestion[] = [
       ground: [2.3, 2],
     }),
     parts: [
-      part('a', `Alleen de 2 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', -2 * 5 / 35, 2, [
-        `De 2 A verdeelt zich over 5 Ω en de tak 10 + 20 = 30 Ω. Door de 10 Ω loopt 2·5/35 = 0,286 A naar links.`,
-        `Bijdrage = <b>−0,286 A</b>.`,
+      part('a', `Alleen de 2 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', (-2 * 5) / 35, 2, [
+        `De 2 A verdeelt zich over 5 Ω en de tak 10 + 20 = 30 Ω. Door de 10 Ω loopt dat deel naar links, tegen de pijl in:${d`i_1' = -2 \cdot \frac{5}{5 + 10 + 20} = \boxed{-0{,}286\,\mathrm{A}}`}`,
       ]),
-      part('b', `Alleen de 1 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', 20 / 35, 2, [`Stroomdeler: 1·20/(20 + 10 + 5) = <b>0,571 A</b>.`]),
-      part('c', `Bepaal i<sub>1</sub>.`, 'A', 10 / 35, 2, [`i<sub>1</sub> = −0,286 + 0,571 = <b>0,286 A</b>.`]),
+      part('b', `Alleen de 1 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', 20 / 35, 2, [
+        `Stroomdeler over 20 Ω en de tak 10 + 5 Ω:${d`i_1'' = 1 \cdot \frac{20}{20 + 10 + 5} = \boxed{0{,}571\,\mathrm{A}}`}`,
+      ]),
+      part('c', `Bepaal i<sub>1</sub>.`, 'A', 10 / 35, 2, [`Tel op:${d`i_1 = -0{,}286 + 0{,}571 = \boxed{0{,}286\,\mathrm{A}}`}`]),
     ],
   },
   {
@@ -358,11 +412,13 @@ const WEEK_F: ExamQuestion[] = [
       dots: [[1.2, 0], [1.2, 2], [2.7, 0], [2.7, 2]],
     }),
     parts: [
-      part('a', `Alleen de 20 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', 15, 2, [`10 A-bron open. Stroomdeler: 20·6/(2 + 6) = <b>15 A</b>.`]),
-      part('b', `Alleen de 10 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', -7.5, 2, [
-        `20 A-bron open. De 10 A-bron trekt stroom omhoog door de weerstanden: −10·6/(2 + 6) = <b>−7,5 A</b>.`,
+      part('a', `Alleen de 20 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', 15, 2, [
+        `10 A-bron open. Stroomdeler over 2 Ω en 6 Ω:${d`i_1' = 20 \cdot \frac{6}{2 + 6} = \boxed{15\,\mathrm{A}}`}`,
       ]),
-      part('c', `Bepaal i<sub>1</sub>.`, 'A', 7.5, 2, [`i<sub>1</sub> = 15 − 7,5 = <b>7,5 A</b>.`]),
+      part('b', `Alleen de 10 A-bron: bepaal de bijdrage aan i<sub>1</sub>.`, 'A', -7.5, 2, [
+        `20 A-bron open. De 10 A-bron trekt stroom omhoog door de weerstanden, dus tegen de pijl in:${d`i_1'' = -10 \cdot \frac{6}{2 + 6} = \boxed{-7{,}5\,\mathrm{A}}`}`,
+      ]),
+      part('c', `Bepaal i<sub>1</sub>.`, 'A', 7.5, 2, [`Tel op:${d`i_1 = 15 - 7{,}5 = \boxed{7{,}5\,\mathrm{A}}`}`]),
     ],
   },
   {
@@ -388,15 +444,18 @@ const WEEK_F: ExamQuestion[] = [
     }),
     parts: (() => {
       const steps = [
-        `Stel v<sub>2</sub> = 1 V. Dan loopt door 5 Ω (en 25 Ω) 1/5 = 0,2 A, dus v<sub>1</sub> = 0,2·(25 + 5) = 6 V.`,
-        `Door 30 Ω: 6/30 = 0,2 A; door 10 Ω: 6/10 = 0,6 A. Samen loopt er 0,2 + 0,2 + 0,6 = 1 A door de twee 3 Ω-weerstanden.`,
-        `v<sub>s</sub> = 3·1 + 6 + 3·1 = 12 V.`,
+        `Stel ${m`v_2 = 1\,\mathrm{V}`}. Werk terug naar de bron:${d`\begin{aligned}
+          i_{25} &= \frac{1}{5} = 0{,}2\,\mathrm{A} \qquad v_1 = 0{,}2 \cdot (25 + 5) = 6\,\mathrm{V} \\
+          i_{30} &= \frac{6}{30} = 0{,}2\,\mathrm{A} \qquad i_{10} = \frac{6}{10} = 0{,}6\,\mathrm{A} \\
+          i &= 0{,}2 + 0{,}2 + 0{,}6 = 1\,\mathrm{A} \\
+          v_s &= 3 \cdot 1 + 6 + 3 \cdot 1 = 12\,\mathrm{V}
+        \end{aligned}`}`,
       ];
       return [
-        part('a', `Welke v<sub>s</sub> hoort bij v<sub>2</sub> = 1 V?`, 'V', 12, 2, steps),
+        part('a', `Welke v<sub>s</sub> hoort bij v<sub>2</sub> = 1 V?`, 'V', 12, 2, [...steps, `Dus:${d`v_s = \boxed{12\,\mathrm{V}}`}`]),
         part('b', `Bepaal v<sub>2</sub> bij v<sub>s</sub> = 12 V.`, 'V', 1, 2, [
           ...steps,
-          `v<sub>2</sub> is evenredig met v<sub>s</sub>. Precies de gevraagde 12 V, dus v<sub>2</sub> = <b>1 V</b> — schalen is niet nodig.`,
+          `${m`v_2`} is evenredig met ${m`v_s`}, en dit is precies de gegeven 12 V. Schalen is niet nodig:${d`v_2 = \boxed{1\,\mathrm{V}}`}`,
         ]),
       ];
     })(),
@@ -423,12 +482,18 @@ const WEEK_F: ExamQuestion[] = [
     }),
     parts: (() => {
       const steps = [
-        `Stel i<sub>2</sub> = 1 A. Dan staat er 6 V over beide 6 Ω-weerstanden (parallel), dus ook 1 A door de andere 6 Ω.`,
-        `Door 2 Ω loopt 1 + 1 = 2 A → 4 V. v<sub>s</sub> = 4 + 6 = 10 V.`,
+        `Stel ${m`i_2 = 1\,\mathrm{A}`}. Beide 6 Ω-weerstanden staan parallel, dus door de andere loopt ook 1 A:${d`\begin{aligned}
+          v_x &= 6 \cdot 1 = 6\,\mathrm{V} \\
+          i_1 &= 1 + 1 = 2\,\mathrm{A} \qquad v_{2\Omega} = 2 \cdot 2 = 4\,\mathrm{V} \\
+          v_s &= 4 + 6 = 10\,\mathrm{V}
+        \end{aligned}`}`,
       ];
       return [
-        part('a', `Welke bronspanning hoort bij i<sub>2</sub> = 1 A?`, 'V', 10, 2, steps),
-        part('b', `Bepaal i<sub>2</sub> bij de gegeven bron van 5 V.`, 'A', 0.5, 2, [...steps, `Evenredigheid: i<sub>2</sub> = 1 A · 5/10 = <b>0,5 A</b>.`]),
+        part('a', `Welke bronspanning hoort bij i<sub>2</sub> = 1 A?`, 'V', 10, 2, [...steps, `Dus:${d`v_s = \boxed{10\,\mathrm{V}}`}`]),
+        part('b', `Bepaal i<sub>2</sub> bij de gegeven bron van 5 V.`, 'A', 0.5, 2, [
+          ...steps,
+          `Alles is evenredig met de bron, dus schaal met ${m`\tfrac{5}{10}`}:${d`i_2 = 1\,\mathrm{A} \cdot \frac{5}{10} = \boxed{0{,}5\,\mathrm{A}}`}`,
+        ]),
       ];
     })(),
   },
@@ -450,16 +515,20 @@ const WEEK_F: ExamQuestion[] = [
       dots: [[1.4, 0], [1.4, 2]],
     }),
     parts: [
-      part('a', `Bepaal v met alleen de 2 A-bron actief.`, 'V', 12, 1, [`i = 2 A → v = 3·2² = <b>12 V</b>.`]),
-      part('b', `Bepaal v met alleen de 0,5 A-bron actief.`, 'V', 0.75, 1, [`i = 0,5 A → v = 3·0,5² = <b>0,75 V</b>.`]),
-      part('c', `Bepaal v met beide bronnen actief.`, 'V', 18.75, 1, [`i = 2,5 A → v = 3·2,5² = <b>18,75 V</b> ≠ 12 + 0,75.`]),
+      part('a', `Bepaal v met alleen de 2 A-bron actief.`, 'V', 12, 1, [`Alle 2 A gaat door A:${d`i = 2\,\mathrm{A} \;\Rightarrow\; v = 3 \cdot 2^2 = \boxed{12\,\mathrm{V}}`}`]),
+      part('b', `Bepaal v met alleen de 0,5 A-bron actief.`, 'V', 0.75, 1, [
+        `Alle 0,5 A gaat door A:${d`i = 0{,}5\,\mathrm{A} \;\Rightarrow\; v = 3 \cdot 0{,}5^2 = \boxed{0{,}75\,\mathrm{V}}`}`,
+      ]),
+      part('c', `Bepaal v met beide bronnen actief.`, 'V', 18.75, 1, [
+        `Samen gaat er 2,5 A door A:${d`i = 2{,}5\,\mathrm{A} \;\Rightarrow\; v = 3 \cdot 2{,}5^2 = \boxed{18{,}75\,\mathrm{V}} \neq 12 + 0{,}75`}`,
+      ]),
       choice(
         'd',
         `Waarom klopt superpositie hier niet?`,
         ['Element A is niet-lineair', 'Er zijn twee stroombronnen', 'Stroombronnen mag je niet uitschakelen'],
         0,
         1,
-        [`Superpositie mag alleen in lineaire netwerken. v = 3i² is niet lineair.`],
+        [`Superpositie mag alleen in lineaire netwerken, en ${m`v = 3i^2`} is niet lineair.`],
       ),
     ],
   },

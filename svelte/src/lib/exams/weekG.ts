@@ -1,5 +1,6 @@
 import type { Exam, ExamQuestion, GridElement } from '../types';
 import { abTerminals } from '../generators/built';
+import { m, d } from '../utils/tex';
 import { part, choice, grid } from './helpers';
 
 /** The Les 7 / week G exam-style questions, one per exam topic, with the values shown in class. */
@@ -38,13 +39,14 @@ const theveninFigure = grid({
   ...abTerminals(4.4, 0, 2),
 });
 
-const rtSteps = [
-  `Stroombron openen. Vanaf a-b zie je R<sub>3</sub> parallel aan R<sub>2</sub> + R<sub>1</sub> = 41 Ω.`,
-  `R<sub>t</sub> = 27 ∥ 41 = 27·41/68 = <b>16,279 Ω</b>.`,
+const rtSteps = (final: boolean) => [
+  `Stroombron openen. Vanaf a-b zie je ${m`R_3`} parallel aan ${m`R_1 + R_2 = 41\,\Omega`}:${d`R_t = 27 \parallel 41 = \frac{27 \cdot 41}{27 + 41} = ${final ? String.raw`\boxed{16{,}279\,\Omega}` : String.raw`16{,}279\,\Omega`}`}`,
 ];
-const vtSteps = [
-  `Open klemmen: de 30 A verdeelt zich over R<sub>1</sub> en de tak R<sub>2</sub> + R<sub>3</sub> = 35 Ω. Stroom door R<sub>3</sub>: 30·33/68 = 14,559 A.`,
-  `V<sub>t</sub> = 14,559·27 = <b>393,088 V</b>.`,
+const vtSteps = (final: boolean) => [
+  `Open klemmen: de 30 A verdeelt zich over ${m`R_1`} en de tak ${m`R_2 + R_3 = 35\,\Omega`} (stroomdeler):${d`\begin{aligned}
+    i_3 &= 30 \cdot \frac{33}{33 + 35} = 14{,}559\,\mathrm{A} \\
+    V_t &= i_3 \cdot R_3 = 14{,}559 \cdot 27 = ${final ? String.raw`\boxed{393{,}088\,\mathrm{V}}` : String.raw`393{,}088\,\mathrm{V}`}
+  \end{aligned}`}`,
 ];
 
 const QUESTIONS: ExamQuestion[] = [
@@ -77,11 +79,21 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: (() => {
       const steps = [
-        `Bepaal per weerstand + en −, teken de stroomrichtingen en schrijf elke stroom als i = (v<sub>+</sub> − v<sub>−</sub>)/R. v<sub>1</sub> is gegeven, dus er blijven twee onbekenden over.`,
-        `KCL knoop 2 (verlatende stromen = bronstroom erin): (v<sub>2</sub> − v<sub>1</sub>)/5 + (v<sub>2</sub> − v<sub>3</sub>)/8 = 2 → (×40) 13v<sub>2</sub> − 5v<sub>3</sub> = 80 + 8·4,757 = 118,06`,
-        `KCL knoop 3: v<sub>3</sub>/2 + (v<sub>3</sub> − v<sub>2</sub>)/8 + (v<sub>3</sub> − v<sub>1</sub>)/4 = 0 → (×8) −v<sub>2</sub> + 7v<sub>3</sub> = 2·4,757 = 9,514`,
-        `Druk v<sub>2</sub> uit in v<sub>3</sub>: v<sub>2</sub> = 7v<sub>3</sub> − 9,514. Invullen: 13(7v<sub>3</sub> − 9,514) − 5v<sub>3</sub> = 118,06 → 86v<sub>3</sub> = 241,74.`,
-        `v<sub>3</sub> = <b>2,81 V</b> en v<sub>2</sub> = 7·2,811 − 9,514 = <b>10,16 V</b>.`,
+        `Bepaal per weerstand + en −, teken de stroomrichtingen en schrijf elke stroom als ${m`i = \tfrac{v_+ - v_-}{R}`}. ${m`v_1`} is gegeven, dus er blijven twee onbekenden over.`,
+        `KCL per knoop (verlatende stromen = bronstroom erin):${d`\begin{aligned}
+          \text{knoop 2:}\quad & \frac{v_2 - v_1}{5} + \frac{v_2 - v_3}{8} = 2 \\[4pt]
+          \text{knoop 3:}\quad & \frac{v_3}{2} + \frac{v_3 - v_2}{8} + \frac{v_3 - v_1}{4} = 0
+        \end{aligned}`}`,
+        `Vul ${m`v_1 = 4{,}757`} in en vermenigvuldig met de noemers (×40 en ×8):${d`\left\{\begin{aligned}
+          13v_2 - 5v_3 &= 80 + 8 \cdot 4{,}757 = 118{,}06 \\
+          -v_2 + 7v_3 &= 2 \cdot 4{,}757 = 9{,}514
+        \end{aligned}\right.`}`,
+        `Druk ${m`v_2`} uit in ${m`v_3`} en vul in:${d`\begin{aligned}
+          v_2 &= 7v_3 - 9{,}514 \\
+          13(7v_3 - 9{,}514) - 5v_3 &= 118{,}06 \\
+          86\,v_3 &= 241{,}74
+        \end{aligned}`}`,
+        `Dus:${d`v_3 = \boxed{2{,}81\,\mathrm{V}} \qquad v_2 = 7 \cdot 2{,}811 - 9{,}514 = \boxed{10{,}16\,\mathrm{V}}`}`,
       ];
       return [part('a', `Bereken v<sub>2</sub>.`, 'V', 10.162, 3, steps), part('b', `Bereken v<sub>3</sub>.`, 'V', 2.811, 3, steps)];
     })(),
@@ -111,17 +123,14 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Geef de waarde van i<sub>a</sub>.`, 'A', -10, 3, [
-        `Linkerknoop (alles wat aan de linker verticale draad hangt): erin komt i<sub>b</sub>, eruit gaan i<sub>a</sub> en i<sub>c</sub>.`,
-        `i<sub>b</sub> = i<sub>a</sub> + i<sub>c</sub> → i<sub>a</sub> = −4 − 6 = <b>−10 A</b>.`,
+        `Linkerknoop (alles wat aan de linker verticale draad hangt): erin komt ${m`i_b`}, eruit gaan ${m`i_a`} en ${m`i_c`}.${d`\begin{aligned} i_b &= i_a + i_c \\ i_a &= -4 - 6 = \boxed{-10\,\mathrm{A}} \end{aligned}`}`,
       ]),
       part('b', `Geef de waarde van i<sub>d</sub>.`, 'A', 15.5, 3, [
-        `Middenknoop (tussen B, D, E en G): erin komen i<sub>g</sub> en i<sub>e</sub>, eruit gaan i<sub>b</sub> en i<sub>d</sub>.`,
-        `6 + 5,5 = −4 + i<sub>d</sub> → i<sub>d</sub> = <b>15,5 A</b>.`,
+        `Middenknoop (tussen B, D, E en G): erin komen ${m`i_g`} en ${m`i_e`}, eruit gaan ${m`i_b`} en ${m`i_d`}.${d`\begin{aligned} i_g + i_e &= i_b + i_d \\ 6 + 5{,}5 &= -4 + i_d \\ i_d &= \boxed{15{,}5\,\mathrm{A}} \end{aligned}`}`,
       ]),
       part('c', `Geef de waarde van i<sub>h</sub>.`, 'A', -0.5, 3, [
-        `Onderste knoop (tussen C, E en H): erin komen i<sub>c</sub> en i<sub>h</sub>, eruit gaat i<sub>e</sub>.`,
-        `i<sub>c</sub> + i<sub>h</sub> = i<sub>e</sub> → i<sub>h</sub> = 5,5 − 6 = <b>−0,5 A</b>.`,
-        `Controle in de bovenknoop: i<sub>f</sub> = i<sub>a</sub> + i<sub>d</sub> = 5,5 A, en rechts: i<sub>f</sub> = i<sub>g</sub> + i<sub>h</sub> = 5,5 A ✓`,
+        `Onderste knoop (tussen C, E en H): erin komen ${m`i_c`} en ${m`i_h`}, eruit gaat ${m`i_e`}.${d`\begin{aligned} i_c + i_h &= i_e \\ i_h &= 5{,}5 - 6 = \boxed{-0{,}5\,\mathrm{A}} \end{aligned}`}`,
+        `Controle in de bovenknoop en rechts:${d`i_f = i_a + i_d = 5{,}5\,\mathrm{A} \qquad i_f = i_g + i_h = 5{,}5\,\mathrm{A} \;\checkmark`}`,
       ]),
     ],
   },
@@ -146,9 +155,9 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Geef de stroom i<sub>R2</sub> zoals aangegeven in het schema.`, 'A', 12 / 27 + (8 * 17) / 27, 8, [
-        `Alleen U<sub>B1</sub> (stroombron open): R<sub>1</sub> en R<sub>2</sub> in serie: i′ = 12/(17 + 10) = 0,444 A.`,
-        `Alleen I<sub>B2</sub> (spanningsbron kortgesloten): R<sub>1</sub> ∥ R<sub>2</sub>; stroomdeler: i″ = 8·17/27 = 5,037 A.`,
-        `i<sub>R2</sub> = 0,444 + 5,037 = <b>5,481 A</b>.`,
+        `<b>Alleen ${m`U_{B1}`}</b> (stroombron open): ${m`R_1`} en ${m`R_2`} staan in serie.${d`i' = \frac{12}{17 + 10} = 0{,}444\,\mathrm{A}`}`,
+        `<b>Alleen ${m`I_{B2}`}</b> (spanningsbron kortgesloten): ${m`R_1 \parallel R_2`}, dus een stroomdeler:${d`i'' = 8 \cdot \frac{17}{17 + 10} = 5{,}037\,\mathrm{A}`}`,
+        `Tel op:${d`i_{R2} = i' + i'' = 0{,}444 + 5{,}037 = \boxed{5{,}481\,\mathrm{A}}`}`,
       ]),
     ],
   },
@@ -165,13 +174,13 @@ const QUESTIONS: ExamQuestion[] = [
         ['Een spanningsbron, in serie met R<sub>t</sub>', 'Een stroombron, parallel aan R<sub>t</sub>'],
         0,
         1,
-        [`Thévenin = spanningsbron V<sub>t</sub> in serie met R<sub>t</sub>. Norton = stroombron I<sub>n</sub> parallel aan R<sub>t</sub>.`],
+        [`Thévenin = spanningsbron ${m`V_t`} in serie met ${m`R_t`}. Norton = stroombron ${m`I_n`} parallel aan ${m`R_t`}.`],
       ),
-      part('b', `Bepaal de Thévenin-vervangingsweerstand R<sub>t</sub>.`, 'Ω', RT, 3, rtSteps),
-      part('c', `Wat is de Thévenin-bronwaarde V<sub>t</sub>?`, 'V', VT, 5, vtSteps),
+      part('b', `Bepaal de Thévenin-vervangingsweerstand R<sub>t</sub>.`, 'Ω', RT, 3, rtSteps(true)),
+      part('c', `Wat is de Thévenin-bronwaarde V<sub>t</sub>?`, 'V', VT, 5, vtSteps(true)),
       part('d', `Wat is de Norton-bronwaarde I<sub>n</sub>?`, 'A', IN, 4, [
-        `I<sub>n</sub> = V<sub>t</sub>/R<sub>t</sub> = 393,088/16,279 = <b>24,146 A</b>.`,
-        `Of direct: kortsluiting over a-b schakelt R<sub>3</sub> uit; stroomdeler over R<sub>1</sub> en R<sub>2</sub>: 30·33/41 = 24,146 A ✓`,
+        `Uit ${m`V_t`} en ${m`R_t`}:${d`I_n = \frac{V_t}{R_t} = \frac{393{,}088}{16{,}279} = \boxed{24{,}146\,\mathrm{A}}`}`,
+        `Of direct: een kortsluiting over a-b schakelt ${m`R_3`} uit; stroomdeler over ${m`R_1`} en ${m`R_2`}:${d`I_n = 30 \cdot \frac{33}{33 + 8} = 24{,}146\,\mathrm{A} \;\checkmark`}`,
       ]),
     ],
   },
@@ -182,10 +191,14 @@ const QUESTIONS: ExamQuestion[] = [
     intro: `Zelfde netwerk als vraag 4. Er wordt een belasting op a-b aangesloten, met als doel het vermogen in deze belasting te maximaliseren.`,
     circuit: theveninFigure,
     parts: [
-      part('a', `Welke waarde moet er worden gekozen voor R<sub>L</sub>?`, 'Ω', RT, 2, [...rtSteps, `Maximaal vermogen bij R<sub>L</sub> = R<sub>t</sub> = <b>16,279 Ω</b>.`]),
+      part('a', `Welke waarde moet er worden gekozen voor R<sub>L</sub>?`, 'Ω', RT, 2, [
+        ...rtSteps(false),
+        `Maximaal vermogen bij:${d`R_L = R_t = \boxed{16{,}279\,\Omega}`}`,
+      ]),
       part('b', `Hoe groot is het maximale vermogen P<sub>max</sub> in R<sub>L</sub>?`, 'W', PMAX, 3, [
-        ...vtSteps,
-        `P<sub>max</sub> = V<sub>t</sub>²/(4·R<sub>t</sub>) = 393,088²/(4·16,279) = <b>2372,9 W</b>.`,
+        ...rtSteps(false),
+        ...vtSteps(false),
+        `Vul in:${d`P_{\max} = \frac{V_t^2}{4\,R_t} = \frac{393{,}088^2}{4 \cdot 16{,}279} = \boxed{2372{,}9\,\mathrm{W}}`}`,
       ]),
     ],
   },
@@ -215,9 +228,12 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Wat is de waarde van R?`, 'Ω', 4, 6, [
-        `Pel af vanaf de klemmen: 7 Ω staat vooraan in serie, dus de rest is 11 − 7 = 4 Ω.`,
-        `Die 4 Ω is 8 Ω parallel aan de tak met R: 1/R<sub>tak</sub> = 1/4 − 1/8 = 1/8 → R<sub>tak</sub> = 8 Ω.`,
-        `Achter R zit 12 ∥ 6 = 4 Ω, dus R + 4 = 8 → R = <b>4 Ω</b>.`,
+        `Schrijf de opbouw op, van de klemmen naar binnen:${d`R_{ab} = 7 + 8 \parallel \bigl(R + (12 \parallel 6)\bigr) = 11\,\Omega`}`,
+        `Pel af vanaf de klemmen: haal de 7 Ω in serie eraf, en daarna de 8 Ω die parallel staat:${d`\begin{aligned}
+          11 - 7 &= 4\,\Omega \\
+          \frac{1}{R_{\text{tak}}} &= \frac{1}{4} - \frac{1}{8} = \frac{1}{8} \;\Rightarrow\; R_{\text{tak}} = 8\,\Omega
+        \end{aligned}`}`,
+        `Achter R zit ${m`12 \parallel 6 = 4\,\Omega`}:${d`\begin{aligned} R + 4 &= 8 \\ R &= \boxed{4\,\Omega} \end{aligned}`}`,
       ]),
     ],
   },

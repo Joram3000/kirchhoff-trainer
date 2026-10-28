@@ -2,6 +2,7 @@ import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { m, d } from '../utils/tex';
 import type { ResistorTarget } from '../utils/target';
 
 interface Variant {
@@ -26,10 +27,10 @@ export function generateParallelVI(): Problem {
   const variant = pick(variants);
 
   const steps = [
-    `Belangrijk inzicht: in een parallelschakeling staat overal dezelfde spanning. Een spanningsbron legt zijn eigen spanning op, dus geldt: v = V<sub>s</sub> = ${fmt(Vs)} V — ongeacht de waarden van R en I<sub>s</sub>!`,
-    `Met de wet van Ohm: i<sub>R</sub> = v/R = ${fmt(Vs)} / ${fmt(R)} = ${fmt(iR)} A.`,
-    `Met KCL in het bovenste knooppunt: I<sub>s</sub> = i<sub>R</sub> + i<sub>v</sub>  →  i<sub>v</sub> = I<sub>s</sub> − i<sub>R</sub> = ${fmt(Is)} − ${fmt(iR)} = ${fmt(iVs)} A.`,
-    `Dus het gevraagde antwoord is ${fmt(variant.answer)} ${variant.unit}.`,
+    `Belangrijk inzicht: in een parallelschakeling staat overal dezelfde spanning. Een spanningsbron legt zijn eigen spanning op, dus geldt: ${m`v = V_s = ${Vs}\,\mathrm{V}`} — ongeacht de waarden van R en I<sub>s</sub>!`,
+    `Met de wet van Ohm:${d`i_R = \frac{v}{R} = \frac{${Vs}}{${R}} = ${iR}\,\mathrm{A}`}`,
+    `Met KCL in het bovenste knooppunt:${d`\begin{aligned} I_s &= i_R + i_v \\ i_v &= I_s - i_R = ${Is} - ${iR} = ${iVs}\,\mathrm{A} \end{aligned}`}`,
+    `Het gevraagde antwoord:${d`\boxed{${variant.answer}\,\mathrm{${variant.unit}}}`}`,
   ];
 
   return {

@@ -1,11 +1,12 @@
 import type { NodeVoltageSpec, NvTarget, Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
-import { round2, fmt, fmtSig } from '../utils/format';
+import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { m, d, t, sig, coef, par, labelled, system } from '../utils/tex';
 import { difficultyLevel } from '../utils/difficulty';
 import { solveLinear } from '../utils/linear';
 
-/** Resistances whose reciprocals are short terminating decimals, so G-matrix entries stay exact. */
+/** Resistances whose reciprocals are short terminating decimals, so the equation coefficients stay exact. */
 const R_POOL = [2, 4, 5, 8, 10, 20, 25, 40, 50] as const;
 
 interface Variant {
@@ -24,41 +25,81 @@ interface Built {
 }
 
 const randR = () => pick(R_POOL);
+/** HTML for question texts; the steps write the same quantities in TeX. */
 const v = (k: string | number) => `v<sub>${k}</sub>`;
-const g = (j: number, k: number) => `g<sub>${j}${k}</sub>`;
-const f = fmtSig;
+/** A coefficient in parentheses when negative. */
+const ps = (n: number) => (n < 0 ? `(${sig(n)})` : sig(n));
 
-/** Source current pushed into a node: positive when the arrow points into it. */
+const KCL_RULE = `KCL per knooppunt: de stromen die het knooppunt <b>verlaten</b> zijn samen gelijk aan de bronstroom die erin gaat.`;
+
+/** How a current source enters the right-hand side of its node's equation. */
 function srcNote(amps: number, into: boolean, node: string): string {
   return into
-    ? `(de ${fmt(amps)} A-bron duwt stroom knooppunt ${node} in → +${fmt(amps)})`
-    : `(de ${fmt(amps)} A-bron trekt stroom uit knooppunt ${node} → −${fmt(amps)})`;
+    ? `Bij knooppunt ${node} duwt de bron ${fmt(amps)} A erin, dus rechts ${m`+${amps}`}.`
+    : `Bij knooppunt ${node} trekt de bron ${fmt(amps)} A eruit, dus rechts ${m`-${amps}`}.`;
 }
 
-/** One standard-form row, e.g. "0,45·v₁ − 0,25·v₂ = −3,5". */
-function row(coefs: number[], rhs: number, names: string[]): string {
+/** One standard-form row as [left side, right side], e.g. "0,45 v₁ − 0,25 v₂" and "−3,5". */
+function row(coefs: number[], rhs: number, names: string[]): [string, string] {
   let s = '';
   coefs.forEach((c, i) => {
     if (Math.abs(c) < 1e-12) return;
-    const body = `${f(Math.abs(c))}·${v(names[i])}`;
-    s += s === '' ? (c < 0 ? '−' : '') + body : (c < 0 ? ' − ' : ' + ') + body;
+    const body = `${coef(Math.abs(c))}\\,v_${names[i]}`;
+    s += s === '' ? (c < 0 ? '-' : '') + body : (c < 0 ? ' - ' : ' + ') + body;
   });
-  return `${s} = ${f(rhs)}`;
+  return [s, sig(rhs)];
 }
 
-function cramer2(G: number[][], I: number[], names: string[]): string[] {
-  const D = G[0][0] * G[1][1] - G[0][1] * G[1][0];
-  const x1 = (I[0] * G[1][1] - G[0][1] * I[1]) / D;
-  const x2 = (G[0][0] * I[1] - I[0] * G[1][0]) / D;
+const standardForm = (G: number[][], I: number[], names: string[]) => system(G.map((r, k) => row(r, I[k], names)));
+
+const ORDINAL = ['eerste', 'tweede', 'derde'];
+
+/** "+ 0,25 v₂" / "− v₃" for a term in a substituted expression; zero terms vanish. */
+function term(c: number, name: string): string {
+  if (Math.abs(c) < 1e-12) return '';
+  return `${c < 0 ? '-' : '+'} ${coef(Math.abs(c))}\\,v_${name}`;
+}
+
+/** Joins a constant and signed terms, leaving out a zero constant and a leading "+". */
+function sum(constant: number, terms: string[]): string {
+  const s = [Math.abs(constant) < 1e-12 ? '' : sig(constant), ...terms].filter(Boolean).join(' ');
+  return s.startsWith('+ ') ? s.slice(2) : s || '0';
+}
+
+/**
+ * Solves the system by substitution, as in the lessons: express the last
+ * unknown with one equation, substitute it into the others, solve what is
+ * left the same way, then substitute back. The final values are boxed.
+ */
+function substitution(G: number[][], I: number[], names: string[]): string[] {
+  const n = names.length;
+  const x = solveLinear(G, I);
+  if (n === 1) {
+    return [`Deel door de coëfficiënt:${d`v_${names[0]} = \frac{${sig(I[0])}}{${sig(G[0][0])}} = \boxed{${x[0]}\,\mathrm{V}}`}`];
+  }
+  const k = n - 1;
+  const last = names[k];
+  // Express the last unknown from the equation where it has the largest coefficient.
+  const pr = G.reduce((best, row, r) => (Math.abs(row[k]) > Math.abs(G[best][k]) ? r : best), 0);
+  const rest = G.map((_, r) => r).filter((r) => r !== pr);
+  const others = names.slice(0, k);
+  const numerator = sum(I[pr], others.map((nm, c) => term(-G[pr][c], nm)));
+  const G2 = rest.map((r) => others.map((_, c) => G[r][c] - (G[r][k] * G[pr][c]) / G[pr][k]));
+  const I2 = rest.map((r) => I[r] - (G[r][k] * I[pr]) / G[pr][k]);
+  const backSub = sum(
+    I[pr],
+    others.map((_, c) => (Math.abs(G[pr][c]) < 1e-12 ? '' : `- ${ps(G[pr][c])} \\cdot ${par(x[c])}`)),
+  );
+
   return [
-    `Los op, bijvoorbeeld met de regel van Cramer: D = ${g(1, 1)}·${g(2, 2)} − ${g(1, 2)}·${g(2, 1)} = ${f(G[0][0])}·${f(G[1][1])} − (${f(G[0][1])})·(${f(G[1][0])}) = ${f(D)}.`,
-    `${v(names[0])} = (i<sub>1</sub>·${g(2, 2)} − ${g(1, 2)}·i<sub>2</sub>) / D = (${f(I[0])}·${f(G[1][1])} − (${f(G[0][1])})·${f(I[1])}) / ${f(D)} = <b>${fmt(x1)} V</b>`,
-    `${v(names[1])} = (${g(1, 1)}·i<sub>2</sub> − i<sub>1</sub>·${g(2, 1)}) / D = (${f(G[0][0])}·${f(I[1])} − ${f(I[0])}·(${f(G[1][0])})) / ${f(D)} = <b>${fmt(x2)} V</b>`,
+    `Druk ${m`v_${last}`} uit met de ${ORDINAL[pr]} vergelijking:${d`v_${last} = \frac{${numerator}}{${sig(G[pr][k])}}`}`,
+    n === 2
+      ? `Vul dat in bij de andere vergelijking en werk de haakjes uit:${d`${coef(G2[0][0])}\,v_${others[0]} = ${sig(I2[0])}`}`
+      : `Vul dat in bij de andere twee vergelijkingen en werk de haakjes uit. Er blijven twee onbekenden over:${standardForm(G2, I2, others)}`,
+    ...substitution(G2, I2, others),
+    `Vul terug in om ${m`v_${last}`} te vinden:${d`v_${last} = \frac{${backSub}}{${sig(G[pr][k])}} = \boxed{${x[k]}\,\mathrm{V}}`}`,
   ];
 }
-
-const SHORTCUT =
-  `Snelle methode (alleen weerstanden + onafhankelijke stroombronnen): ${g(1, 1)}, ${g(2, 2)}, … = som van de conductanties aan dat knooppunt; ${g(1, 2)} = −(conductantie tussen knooppunt 1 en 2); i<sub>k</sub> = bronstroom die knooppunt k in wordt geduwd.`;
 
 function nodeVariant(name: string, node: number, value: number, extra: string[] = []): Variant {
   return {
@@ -70,14 +111,10 @@ function nodeVariant(name: string, node: number, value: number, extra: string[] 
   };
 }
 
-function conductanceVariant(j: number, k: number, value: number, why: string): Variant {
-  return {
-    question: `Schrijf de knooppuntvergelijkingen in matrixvorm G·v = i. Hoe groot is ${g(j, k)}? Geef het antwoord in mS.`,
-    unit: 'mS',
-    answer: round2(value * 1000),
-    extra: [`${g(j, k)} = ${why} = ${f(value)} S = <b>${fmt(value * 1000)} mS</b>.`],
-    target: null,
-  };
+/** Ohm's law over one resistor between two nodes, written out and substituted. */
+function branchCurrent(name: string, from: string, to: string, R: number, vFrom: number, vTo: number): string {
+  const i = (vFrom - vTo) / R;
+  return `Wet van Ohm over de ${fmt(R)} Ω-weerstand:${d`${name} = \frac{v_${from} - v_${to}}{${R}} = \frac{${vFrom} - ${par(vTo)}}{${R}} = \boxed{${i}\,\mathrm{A}}`}`;
 }
 
 /** Level 1 — Hambley Ex. 2.9-style: one unknown node, the other fixed by a source to ground. */
@@ -94,10 +131,13 @@ function oneUnknown(): Built {
   return {
     title: 'Knooppuntspanning · één onbekende',
     steps: [
-      `Kies de onderste knoop als referentie. Knooppunt 2 zit via de spanningsbron vast aan de referentie: ${v(2)} = ${fmt(V2)} V. Er blijft één onbekende over: ${v(1)}.`,
-      `KCL in knooppunt 1 (som van de stromen die het knooppunt verlaten = bronstroom die erin gaat): ${v(1)}/${fmt(R1)} + (${v(1)} − ${fmt(V2)})/${fmt(R2)} = ${fmt(Is)}`,
-      `Standaardvorm: (1/${fmt(R1)} + 1/${fmt(R2)})·${v(1)} = ${fmt(Is)} + ${fmt(V2)}/${fmt(R2)} → ${f(G)}·${v(1)} = ${f(rhs)}`,
-      `${v(1)} = ${f(rhs)} / ${f(G)} = <b>${fmt(v1)} V</b>`,
+      `Kies de onderste knoop als referentie. Knooppunt 2 zit via de spanningsbron vast aan de referentie, dus ${m`v_2 = ${V2}\,\mathrm{V}`}. Er blijft één onbekende over: ${m`v_1`}.`,
+      `${KCL_RULE} Voor knooppunt 1:${d`\frac{v_1}{${R1}} + \frac{v_1 - ${V2}}{${R2}} = ${Is}`}`,
+      `Zet de termen met ${m`v_1`} links en de bekende termen rechts:${d`\begin{aligned}
+        \left(\frac{1}{${R1}} + \frac{1}{${R2}}\right) v_1 &= ${Is} + \frac{${V2}}{${R2}} \\
+        ${coef(G)}\,v_1 &= ${sig(rhs)}
+      \end{aligned}`}`,
+      `Deel door de coëfficiënt:${d`v_1 = \frac{${sig(rhs)}}{${sig(G)}} = \boxed{${v1}\,\mathrm{V}}`}`,
     ],
     variants: [
       nodeVariant('1', 0, v1),
@@ -105,7 +145,7 @@ function oneUnknown(): Built {
         question: `Bepaal de stroom i door de ${fmt(R2)} Ω-weerstand (richting zoals aangegeven).`,
         unit: 'A',
         answer: round2(i),
-        extra: [`i = (${v(1)} − ${v(2)})/${fmt(R2)} = (${fmt(v1)} − ${fmt(V2)})/${fmt(R2)} = <b>${fmt(i)} A</b>`],
+        extra: [branchCurrent('i', '1', '2', R2, v1, V2)],
         target: { link: 0 },
       },
     ],
@@ -138,18 +178,18 @@ function twoNodes(): Built {
   ];
   const I = [s1, s2];
   const [v1, v2] = solveLinear(G, I);
-  const i1 = (v1 - v2) / Rb;
   const names = ['1', '2'];
 
   return {
     title: 'Knooppuntspanning · twee knooppunten',
     steps: [
-      `Referentieknoop = onderste knoop (massa). Onbekenden: ${v(1)} en ${v(2)}. Stroom van knooppunt n naar k door R: (v<sub>n</sub> − v<sub>k</sub>)/R.`,
-      `KCL knooppunt 1: ${v(1)}/${fmt(Ra)} + (${v(1)} − ${v(2)})/${fmt(Rb)} = ${fmt(s1)} ${srcNote(I1, in1, '1')}`,
-      `KCL knooppunt 2: ${v(2)}/${fmt(Rc)} + (${v(2)} − ${v(1)})/${fmt(Rb)} = ${fmt(s2)} ${srcNote(I2, in2, '2')}`,
-      SHORTCUT,
-      `Standaardvorm: ${row(G[0], I[0], names)} en ${row(G[1], I[1], names)}`,
-      ...cramer2(G, I, names),
+      `Referentieknoop = onderste knoop (massa). Onbekenden: ${m`v_1`} en ${m`v_2`}. De stroom van knooppunt n naar k door een weerstand R is ${m`\tfrac{v_n - v_k}{R}`}.`,
+      `${KCL_RULE} ${srcNote(I1, in1, '1')} ${srcNote(I2, in2, '2')}${labelled([
+        ['knooppunt 1', t`\frac{v_1}{${Ra}} + \frac{v_1 - v_2}{${Rb}} = ${s1}`],
+        ['knooppunt 2', t`\frac{v_2}{${Rc}} + \frac{v_2 - v_1}{${Rb}} = ${s2}`],
+      ])}`,
+      `Schrijf het stelsel in standaardvorm (onbekenden links, bronnen rechts):${standardForm(G, I, names)}`,
+      ...substitution(G, I, names),
     ],
     variants: [
       nodeVariant('1', 0, v1),
@@ -157,12 +197,10 @@ function twoNodes(): Built {
       {
         question: `Bepaal de stroom i<sub>1</sub> door de ${fmt(Rb)} Ω-weerstand.`,
         unit: 'A',
-        answer: round2(i1),
-        extra: [`i<sub>1</sub> = (${v(1)} − ${v(2)})/${fmt(Rb)} = (${fmt(v1)} − ${fmt(v2)})/${fmt(Rb)} = <b>${fmt(i1)} A</b>`],
+        answer: round2((v1 - v2) / Rb),
+        extra: [branchCurrent('i_1', '1', '2', Rb, v1, v2)],
         target: { link: 0 },
       },
-      conductanceVariant(1, 1, G[0][0], `1/${fmt(Ra)} + 1/${fmt(Rb)} (alle conductanties aan knooppunt 1)`),
-      conductanceVariant(1, 2, G[0][1], `−1/${fmt(Rb)} (min de conductantie tussen knooppunt 1 en 2)`),
     ],
     circuit: {
       nodes: [{ name: '1' }, { name: '2' }],
@@ -197,11 +235,13 @@ function knownNode(): Built {
   return {
     title: 'Knooppuntspanning · bekende knoop',
     steps: [
-      `De referentieknoop ligt aan de min-kant van de spanningsbron, dus ${v(3)} = ${fmt(Vs)} V is meteen bekend. Onbekenden: ${v(1)} en ${v(2)}.`,
-      `KCL knooppunt 1: ${v(1)}/${fmt(Ra)} + (${v(1)} − ${v(2)})/${fmt(Rb)} = ${fmt(Is)}`,
-      `KCL knooppunt 2: ${v(2)}/${fmt(Rc)} + (${v(2)} − ${v(1)})/${fmt(Rb)} + (${v(2)} − ${fmt(Vs)})/${fmt(Rd)} = 0`,
-      `Breng de bekende term ${fmt(Vs)}/${fmt(Rd)} = ${f(Vs / Rd)} naar rechts. Standaardvorm: ${row(G[0], I[0], names)} en ${row(G[1], I[1], names)}`,
-      ...cramer2(G, I, names),
+      `De referentieknoop ligt aan de min-kant van de spanningsbron, dus ${m`v_3 = ${Vs}\,\mathrm{V}`} is meteen bekend. Onbekenden: ${m`v_1`} en ${m`v_2`}.`,
+      `${KCL_RULE}${labelled([
+        ['knooppunt 1', t`\frac{v_1}{${Ra}} + \frac{v_1 - v_2}{${Rb}} = ${Is}`],
+        ['knooppunt 2', t`\frac{v_2}{${Rc}} + \frac{v_2 - v_1}{${Rb}} + \frac{v_2 - ${Vs}}{${Rd}} = 0`],
+      ])}`,
+      `Breng de bekende term ${m`\tfrac{${Vs}}{${Rd}} = ${sig(Vs / Rd)}`} naar rechts. In standaardvorm:${standardForm(G, I, names)}`,
+      ...substitution(G, I, names),
     ],
     variants: [
       nodeVariant('1', 0, v1),
@@ -210,7 +250,7 @@ function knownNode(): Built {
         question: `Bepaal de stroom i door de ${fmt(Rd)} Ω-weerstand (richting zoals aangegeven).`,
         unit: 'A',
         answer: round2(i),
-        extra: [`i = (${v(2)} − ${v(3)})/${fmt(Rd)} = (${fmt(v2)} − ${fmt(Vs)})/${fmt(Rd)} = <b>${fmt(i)} A</b>`],
+        extra: [branchCurrent('i', '2', '3', Rd, v2, Vs)],
         target: { link: 1 },
       },
     ],
@@ -240,28 +280,41 @@ function supernode(): Built {
   const Ra = randR();
   const Rb = randR();
   // KVL: plus left → v1 − v2 = Vs; plus right → v2 − v1 = Vs.
-  const d = plusLeft ? Vs : -Vs;
+  const dv = plusLeft ? Vs : -Vs;
   const [v1, v2] = solveLinear(
     [
       [1 / Ra, 1 / Rb],
       [1, -1],
     ],
-    [s, d],
+    [s, dv],
   );
   const iSrc = s - v1 / Ra;
-  const kvl = plusLeft ? `${v(1)} − ${v(2)} = ${fmt(Vs)}` : `${v(2)} − ${v(1)} = ${fmt(Vs)}`;
-  const sub = plusLeft
-    ? `Vul ${v(1)} = ${v(2)} + ${fmt(Vs)} in: (${v(2)} + ${fmt(Vs)})/${fmt(Ra)} + ${v(2)}/${fmt(Rb)} = ${fmt(s)} → ${f(1 / Ra + 1 / Rb)}·${v(2)} = ${f(s - Vs / Ra)}`
-    : `Vul ${v(2)} = ${v(1)} + ${fmt(Vs)} in: ${v(1)}/${fmt(Ra)} + (${v(1)} + ${fmt(Vs)})/${fmt(Rb)} = ${fmt(s)} → ${f(1 / Ra + 1 / Rb)}·${v(1)} = ${f(s - Vs / Rb)}`;
+  const G = 1 / Ra + 1 / Rb;
+
+  // Substitute the KVL relation for the node on the plus side, solve for the other.
+  const solve = plusLeft
+    ? `Vul ${m`v_1 = v_2 + ${Vs}`} in en los ${m`v_2`} op:${d`\begin{aligned}
+        \frac{v_2 + ${Vs}}{${Ra}} + \frac{v_2}{${Rb}} &= ${s} \\
+        ${coef(G)}\,v_2 &= ${sig(s - Vs / Ra)} \\
+        v_2 &= \boxed{${v2}\,\mathrm{V}}
+      \end{aligned}`}`
+    : `Vul ${m`v_2 = v_1 + ${Vs}`} in en los ${m`v_1`} op:${d`\begin{aligned}
+        \frac{v_1}{${Ra}} + \frac{v_1 + ${Vs}}{${Rb}} &= ${s} \\
+        ${coef(G)}\,v_1 &= ${sig(s - Vs / Rb)} \\
+        v_1 &= \boxed{${v1}\,\mathrm{V}}
+      \end{aligned}`}`;
+  const other = plusLeft
+    ? `Dan volgt ${m`v_1`} uit de KVL-vergelijking:${d`v_1 = v_2 + ${Vs} = ${v2} + ${Vs} = \boxed{${v1}\,\mathrm{V}}`}`
+    : `Dan volgt ${m`v_2`} uit de KVL-vergelijking:${d`v_2 = v_1 + ${Vs} = ${v1} + ${Vs} = \boxed{${v2}\,\mathrm{V}}`}`;
 
   return {
     title: 'Knooppuntspanning · supernode',
     steps: [
       `Tussen knooppunt 1 en 2 zit een spanningsbron: de stroom daardoor is onbekend, dus in knooppunt 1 of 2 los kun je geen KCL opschrijven. Teken een <b>supernode</b> om de bron heen.`,
-      `KVL over de bron (de + kant zit ${plusLeft ? 'links' : 'rechts'}): ${kvl}`,
-      `KCL voor de supernode (stromen die het gesloten oppervlak verlaten): ${v(1)}/${fmt(Ra)} + ${v(2)}/${fmt(Rb)} = ${fmt(s)} ${srcNote(Is, into, '1')}`,
-      sub,
-      `Dus ${v(1)} = <b>${fmt(v1)} V</b> en ${v(2)} = <b>${fmt(v2)} V</b>.`,
+      `KVL over de bron (de + zit ${plusLeft ? 'links' : 'rechts'}):${plusLeft ? d`v_1 - v_2 = ${Vs}` : d`v_2 - v_1 = ${Vs}`}`,
+      `KCL voor de supernode: de stromen die het gesloten oppervlak verlaten zijn samen gelijk aan de bronstroom erin. ${srcNote(Is, into, '1')}${d`\frac{v_1}{${Ra}} + \frac{v_2}{${Rb}} = ${s}`}`,
+      solve,
+      other,
     ],
     variants: [
       nodeVariant('1', 0, v1),
@@ -271,7 +324,10 @@ function supernode(): Built {
         unit: 'A',
         answer: round2(iSrc),
         extra: [
-          `KCL in knooppunt 1 (nu mét de bronstroom): ${fmt(s)} = ${v(1)}/${fmt(Ra)} + i<sub>s</sub> → i<sub>s</sub> = ${fmt(s)} − ${fmt(v1)}/${fmt(Ra)} = <b>${fmt(iSrc)} A</b>`,
+          `KCL in knooppunt 1 alleen, nu mét de stroom door de bron:${d`\begin{aligned}
+            ${s} &= \frac{v_1}{${Ra}} + i_s \\
+            i_s &= ${s} - \frac{${v1}}{${Ra}} = \boxed{${iSrc}\,\mathrm{A}}
+          \end{aligned}`}`,
         ],
         target: { link: 0 },
       },
@@ -313,22 +369,22 @@ function threeNodes(): Built {
   ];
   const I = [Is, s2, 0];
   const [v1, v2, v3] = solveLinear(G, I);
-  const i1 = (v1 - v2) / R12;
   const names = ['1', '2', '3'];
-  const node2Lhs = midSource
-    ? `(${v(2)} − ${v(1)})/${fmt(R12)} + (${v(2)} − ${v(3)})/${fmt(R23)} = ${fmt(s2)} ${srcNote(I2, in2, '2')}`
-    : `(${v(2)} − ${v(1)})/${fmt(R12)} + ${v(2)}/${fmt(Rb)} + (${v(2)} − ${v(3)})/${fmt(R23)} = 0`;
+  const node2 = midSource
+    ? t`\frac{v_2 - v_1}{${R12}} + \frac{v_2 - v_3}{${R23}} = ${s2}`
+    : t`\frac{v_2 - v_1}{${R12}} + \frac{v_2}{${Rb}} + \frac{v_2 - v_3}{${R23}} = 0`;
 
   return {
     title: 'Knooppuntspanning · drie knooppunten',
     steps: [
-      `Geen enkele weerstand staat zuiver in serie of parallel (de ${fmt(R13)} Ω overbrugt knooppunt 1 en 3), dus vervangingsweerstanden helpen niet. Onbekenden: ${v(1)}, ${v(2)}, ${v(3)}.`,
-      `KCL knooppunt 1: ${v(1)}/${fmt(Ra)} + (${v(1)} − ${v(2)})/${fmt(R12)} + (${v(1)} − ${v(3)})/${fmt(R13)} = ${fmt(Is)}`,
-      `KCL knooppunt 2: ${node2Lhs}`,
-      `KCL knooppunt 3: (${v(3)} − ${v(2)})/${fmt(R23)} + ${v(3)}/${fmt(Rc)} + (${v(3)} − ${v(1)})/${fmt(R13)} = 0`,
-      SHORTCUT,
-      `Standaardvorm:<br>${row(G[0], I[0], names)}<br>${row(G[1], I[1], names)}<br>${row(G[2], I[2], names)}`,
-      `Los het stelsel op (rekenmachine, eliminatie of V = G<sup>−1</sup>·I): ${v(1)} = <b>${fmt(v1)} V</b>, ${v(2)} = <b>${fmt(v2)} V</b>, ${v(3)} = <b>${fmt(v3)} V</b>.`,
+      `Geen enkele weerstand staat zuiver in serie of parallel (de ${fmt(R13)} Ω overbrugt knooppunt 1 en 3), dus vervangingsweerstanden helpen niet. Onbekenden: ${m`v_1, v_2, v_3`}.`,
+      `${KCL_RULE}${midSource ? ` ${srcNote(I2, in2, '2')}` : ''}${labelled([
+        ['knooppunt 1', t`\frac{v_1}{${Ra}} + \frac{v_1 - v_2}{${R12}} + \frac{v_1 - v_3}{${R13}} = ${Is}`],
+        ['knooppunt 2', node2],
+        ['knooppunt 3', t`\frac{v_3 - v_2}{${R23}} + \frac{v_3}{${Rc}} + \frac{v_3 - v_1}{${R13}} = 0`],
+      ])}`,
+      `In standaardvorm:${standardForm(G, I, names)}`,
+      ...substitution(G, I, names),
     ],
     variants: [
       nodeVariant('1', 0, v1),
@@ -337,12 +393,10 @@ function threeNodes(): Built {
       {
         question: `Bepaal de stroom i<sub>1</sub> door de ${fmt(R12)} Ω-weerstand.`,
         unit: 'A',
-        answer: round2(i1),
-        extra: [`i<sub>1</sub> = (${v(1)} − ${v(2)})/${fmt(R12)} = (${fmt(v1)} − ${fmt(v2)})/${fmt(R12)} = <b>${fmt(i1)} A</b>`],
+        answer: round2((v1 - v2) / R12),
+        extra: [branchCurrent('i_1', '1', '2', R12, v1, v2)],
         target: { link: 0 },
       },
-      conductanceVariant(1, 1, G[0][0], `1/${fmt(Ra)} + 1/${fmt(R12)} + 1/${fmt(R13)}`),
-      conductanceVariant(1, 3, G[0][2], `−1/${fmt(R13)} (min de conductantie tussen knooppunt 1 en 3)`),
     ],
     circuit: {
       nodes: [{ name: '1' }, { name: '2' }, { name: '3' }],
@@ -378,19 +432,20 @@ function dependentSource(): Built {
     const I = [Is, 0];
     const [v1, v2] = solveLinear(G, I);
     if (Math.abs(v1) > 500 || Math.abs(v2) > 500) continue;
-    const ix = (v1 - v2) / Rb;
     const names = ['1', '2'];
-    const ki = `${fmt(k)}·i<sub>x</sub>`;
+    const ki = t`${k}\,i_x`;
 
     return {
       title: 'Knooppuntspanning · gestuurde bron',
       steps: [
-        `Behandel de gestuurde bron eerst als een gewone stroombron van ${ki}; die stroom verlaat knooppunt 2 naar beneden.`,
-        `KCL knooppunt 1: ${v(1)}/${fmt(Ra)} + (${v(1)} − ${v(2)})/${fmt(Rb)} = ${fmt(Is)}`,
-        `KCL knooppunt 2: (${v(2)} − ${v(1)})/${fmt(Rb)} + ${v(2)}/${fmt(Rc)} + ${ki} = 0`,
-        `Druk de stuurgrootheid uit in knooppuntspanningen: i<sub>x</sub> = (${v(1)} − ${v(2)})/${fmt(Rb)}. Vul in bij knooppunt 2.`,
-        `Standaardvorm: ${row(G[0], I[0], names)} en ${row(G[1], I[1], names)} (let op: G is nu niet symmetrisch — de snelle methode werkt niet bij gestuurde bronnen).`,
-        ...cramer2(G, I, names),
+        `Behandel de gestuurde bron eerst als een gewone stroombron van ${m`${ki}`}; die stroom verlaat knooppunt 2 naar beneden.`,
+        `${KCL_RULE}${labelled([
+          ['knooppunt 1', t`\frac{v_1}{${Ra}} + \frac{v_1 - v_2}{${Rb}} = ${Is}`],
+          ['knooppunt 2', t`\frac{v_2 - v_1}{${Rb}} + \frac{v_2}{${Rc}} + ${ki} = 0`],
+        ])}`,
+        `Druk de stuurgrootheid uit in knooppuntspanningen en vul die in bij knooppunt 2:${d`i_x = \frac{v_1 - v_2}{${Rb}}`}`,
+        `In standaardvorm:${standardForm(G, I, names)}`,
+        ...substitution(G, I, names),
       ],
       variants: [
         nodeVariant('1', 0, v1),
@@ -398,8 +453,8 @@ function dependentSource(): Built {
         {
           question: `Bepaal de stuurstroom i<sub>x</sub>.`,
           unit: 'A',
-          answer: round2(ix),
-          extra: [`i<sub>x</sub> = (${v(1)} − ${v(2)})/${fmt(Rb)} = (${fmt(v1)} − ${fmt(v2)})/${fmt(Rb)} = <b>${fmt(ix)} A</b>`],
+          answer: round2((v1 - v2) / Rb),
+          extra: [branchCurrent('i_x', '1', '2', Rb, v1, v2)],
           target: { link: 0 },
         },
       ],

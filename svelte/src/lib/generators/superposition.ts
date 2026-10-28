@@ -1,41 +1,40 @@
 import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
-import { fmt } from '../utils/format';
 import { difficultyLevel } from '../utils/difficulty';
+import { m, d, par } from '../utils/tex';
 import { variant, problemFrom, ohm, volt, amp, type Built } from './built';
 
 const R_POOL = [2, 4, 5, 6, 8, 10, 12, 15, 20, 30] as const;
 const randR = () => pick(R_POOL);
-const par = (a: number, b: number) => (a * b) / (a + b);
-const p = (n: number) => (n < 0 ? `(${fmt(n)})` : fmt(n));
+const parallel = (a: number, b: number) => (a * b) / (a + b);
 
-const OFF = `Zet steeds één bron aan en de andere uit: een spanningsbron uit = <b>kortsluiten</b>, een stroombron uit = <b>openen</b> (weghalen).`;
+const OFF = `Plan van aanpak: zet steeds één bron aan en de andere uit — een spanningsbron uit = <b>kortsluiten</b>, een stroombron uit = <b>openen</b> (weghalen). Tel daarna de bijdragen op.`;
 
 /** Shared three-question set: each contribution, then the sum. */
 function contributions(
-  name: string,
   first: { source: string; value: number },
   second: { source: string; value: number },
   highlight: string[],
 ): Built['variants'] {
   const total = first.value + second.value;
-  const sum = `${name} = ${name}′ + ${name}″ = ${fmt(first.value)} + ${p(second.value)} = <b>${fmt(total)} A</b>`;
   return [
     variant(
-      `Superpositie, stap 1: laat alleen ${first.source} aan staan. Hoe groot is de bijdrage ${name}′ aan de stroom ${name}?`,
+      `Superpositie, stap 1: laat alleen ${first.source} aan staan. Hoe groot is de bijdrage i′ aan de stroom i?`,
       'A',
       first.value,
-      [],
+      [`Gevraagd is de eerste bijdrage:${d`i' = \boxed{${first.value}\,\mathrm{A}}`}`],
       highlight,
     ),
     variant(
-      `Superpositie, stap 2: laat alleen ${second.source} aan staan. Hoe groot is de bijdrage ${name}″ aan de stroom ${name}?`,
+      `Superpositie, stap 2: laat alleen ${second.source} aan staan. Hoe groot is de bijdrage i″ aan de stroom i?`,
       'A',
       second.value,
-      [],
+      [`Gevraagd is de tweede bijdrage:${d`i'' = \boxed{${second.value}\,\mathrm{A}}`}`],
       highlight,
     ),
-    variant(`Bepaal met het superpositiebeginsel de stroom ${name} (richting zoals aangegeven).`, 'A', total, [sum], highlight),
+    variant(`Bepaal met het superpositiebeginsel de stroom i (richting zoals aangegeven).`, 'A', total, [
+      `Tel de bijdragen op, met hun teken:${d`i = i' + i'' = ${first.value} + ${par(second.value)} = \boxed{${total}\,\mathrm{A}}`}`,
+    ], highlight),
   ];
 }
 
@@ -54,10 +53,10 @@ function vAndI(): Built {
     title: 'Superpositie · V en I',
     steps: [
       OFF,
-      `<b>Alleen V<sub>s</sub></b> (I<sub>s</sub> open): R<sub>1</sub> en R<sub>2</sub> staan in serie. i′ = V<sub>s</sub>/(R<sub>1</sub> + R<sub>2</sub>) = ${fmt(V)}/(${fmt(R1)} + ${fmt(R2)}) = ${fmt(i1)} A.`,
-      `<b>Alleen I<sub>s</sub></b> (V<sub>s</sub> kortgesloten): R<sub>1</sub> komt nu parallel aan R<sub>2</sub>. Stroomdeler: i″ = ${p(s)}·R<sub>1</sub>/(R<sub>1</sub> + R<sub>2</sub>) = ${p(s)}·${fmt(R1)}/${fmt(R1 + R2)} = ${fmt(i2)} A${up ? '' : ' (negatief: de bron trekt stroom omhoog door R<sub>2</sub>)'}.`,
+      `<b>Alleen ${m`V_s`}</b> (${m`I_s`} open): ${m`R_1`} en ${m`R_2`} staan in serie.${d`i' = \frac{V_s}{R_1 + R_2} = \frac{${V}}{${R1} + ${R2}} = ${i1}\,\mathrm{A}`}`,
+      `<b>Alleen ${m`I_s`}</b> (${m`V_s`} kortgesloten): ${m`R_1`} komt parallel aan ${m`R_2`}, dus een stroomdeler${up ? '' : ' (de bron wijst naar beneden, dus reken met een negatieve stroom)'}:${d`i'' = I_s \cdot \frac{R_1}{R_1 + R_2} = ${par(s)} \cdot \frac{${R1}}{${R1} + ${R2}} = ${i2}\,\mathrm{A}`}`,
     ],
-    variants: contributions('i', { source: 'de spanningsbron V<sub>s</sub>', value: i1 }, { source: 'de stroombron I<sub>s</sub>', value: i2 }, ['R2']),
+    variants: contributions({ source: 'de spanningsbron V<sub>s</sub>', value: i1 }, { source: 'de stroombron I<sub>s</sub>', value: i2 }, ['R2']),
     circuit: {
       wires: [
         [[0, 2], [3.3, 2]],
@@ -81,8 +80,10 @@ function twoVoltages(): Built {
   const plus2Top = Math.random() < 0.75;
   const s2 = plus2Top ? V2 : -V2;
   const [R1, R2, R3] = [randR(), randR(), randR()];
-  const vA = (V1 * par(R2, R3)) / (R1 + par(R2, R3));
-  const vB = (s2 * par(R1, R2)) / (R3 + par(R1, R2));
+  const p23 = parallel(R2, R3);
+  const p12 = parallel(R1, R2);
+  const vA = (V1 * p23) / (R1 + p23);
+  const vB = (s2 * p12) / (R3 + p12);
   const i1 = vA / R2;
   const i2 = vB / R2;
 
@@ -90,10 +91,18 @@ function twoVoltages(): Built {
     title: 'Superpositie · twee spanningsbronnen',
     steps: [
       OFF,
-      `<b>Alleen V<sub>1</sub></b> (V<sub>2</sub> kortgesloten): R<sub>2</sub> en R<sub>3</sub> staan parallel: ${fmt(R2)} ∥ ${fmt(R3)} = ${fmt(par(R2, R3))} Ω. Spanningsdeler: v′ = ${fmt(V1)}·${fmt(par(R2, R3))}/(${fmt(R1)} + ${fmt(par(R2, R3))}) = ${fmt(vA)} V, dus i′ = v′/R<sub>2</sub> = ${fmt(i1)} A.`,
-      `<b>Alleen V<sub>2</sub></b> (V<sub>1</sub> kortgesloten): R<sub>1</sub> ∥ R<sub>2</sub> = ${fmt(par(R1, R2))} Ω. Spanningsdeler: v″ = ${p(s2)}·${fmt(par(R1, R2))}/(${fmt(R3)} + ${fmt(par(R1, R2))}) = ${fmt(vB)} V${plus2Top ? '' : ' (de + van V<sub>2</sub> zit onder, dus negatief)'}, dus i″ = v″/R<sub>2</sub> = ${fmt(i2)} A.`,
+      `<b>Alleen ${m`V_1`}</b> (${m`V_2`} kortgesloten): ${m`R_2`} en ${m`R_3`} staan parallel. Spanningsdeler, dan de wet van Ohm:${d`\begin{aligned}
+        R_2 \parallel R_3 &= \frac{${R2} \cdot ${R3}}{${R2} + ${R3}} = ${p23}\,\Omega \\
+        v' &= ${V1} \cdot \frac{${p23}}{${R1} + ${p23}} = ${vA}\,\mathrm{V} \\
+        i' &= \frac{v'}{R_2} = \frac{${vA}}{${R2}} = ${i1}\,\mathrm{A}
+      \end{aligned}`}`,
+      `<b>Alleen ${m`V_2`}</b> (${m`V_1`} kortgesloten): nu staan ${m`R_1`} en ${m`R_2`} parallel${plus2Top ? '' : `; de + van ${m`V_2`} zit onder, dus reken met ${m`-${V2}\,\mathrm{V}`}`}:${d`\begin{aligned}
+        R_1 \parallel R_2 &= \frac{${R1} \cdot ${R2}}{${R1} + ${R2}} = ${p12}\,\Omega \\
+        v'' &= ${par(s2)} \cdot \frac{${p12}}{${R3} + ${p12}} = ${vB}\,\mathrm{V} \\
+        i'' &= \frac{v''}{R_2} = \frac{${vB}}{${R2}} = ${i2}\,\mathrm{A}
+      \end{aligned}`}`,
     ],
-    variants: contributions('i', { source: 'V<sub>1</sub>', value: i1 }, { source: 'V<sub>2</sub>', value: i2 }, ['R2']),
+    variants: contributions({ source: 'V<sub>1</sub>', value: i1 }, { source: 'V<sub>2</sub>', value: i2 }, ['R2']),
     circuit: {
       wires: [[[0, 2], [4, 2]]],
       elements: [
@@ -125,10 +134,10 @@ function twoCurrents(): Built {
     title: 'Superpositie · twee stroombronnen',
     steps: [
       OFF,
-      `<b>Alleen I<sub>1</sub></b> (I<sub>2</sub> open): de stroom verdeelt zich over R<sub>1</sub> en de tak R<sub>2</sub> + R<sub>3</sub>. Stroomdeler: i′ = ${p(s1)}·R<sub>1</sub>/(R<sub>1</sub> + R<sub>2</sub> + R<sub>3</sub>) = ${p(s1)}·${fmt(R1)}/${fmt(tot)} = ${fmt(i1)} A.`,
-      `<b>Alleen I<sub>2</sub></b> (I<sub>1</sub> open): de stroom verdeelt zich over R<sub>3</sub> en de tak R<sub>2</sub> + R<sub>1</sub>; door R<sub>2</sub> loopt die naar <b>links</b>, tegen de pijl in. i″ = −${p(s2)}·R<sub>3</sub>/${fmt(tot)} = ${fmt(i2)} A.`,
+      `<b>Alleen ${m`I_1`}</b> (${m`I_2`} open): de stroom verdeelt zich over ${m`R_1`} en de tak ${m`R_2 + R_3`}:${d`i' = I_1 \cdot \frac{R_1}{R_1 + R_2 + R_3} = ${par(s1)} \cdot \frac{${R1}}{${tot}} = ${i1}\,\mathrm{A}`}`,
+      `<b>Alleen ${m`I_2`}</b> (${m`I_1`} open): de stroom verdeelt zich over ${m`R_3`} en de tak ${m`R_2 + R_1`}. Door ${m`R_2`} loopt die naar <b>links</b>, tegen de pijl in, dus met een minteken:${d`i'' = -I_2 \cdot \frac{R_3}{R_1 + R_2 + R_3} = -${par(s2)} \cdot \frac{${R3}}{${tot}} = ${i2}\,\mathrm{A}`}`,
     ],
-    variants: contributions('i', { source: 'I<sub>1</sub>', value: i1 }, { source: 'I<sub>2</sub>', value: i2 }, ['R2']),
+    variants: contributions({ source: 'I<sub>1</sub>', value: i1 }, { source: 'I<sub>2</sub>', value: i2 }, ['R2']),
     circuit: {
       wires: [
         [[0, 0], [1.2, 0]],
@@ -161,10 +170,10 @@ function floatingSource(): Built {
     title: 'Superpositie · zwevende bron',
     steps: [
       OFF,
-      `<b>Alleen e</b> (I<sub>s</sub> open): R<sub>3</sub> staat direct parallel aan e en verandert dus niets aan de rest. Er blijft één lus over: e, R<sub>2</sub>, massa, R<sub>1</sub>. De + van e zit ${plusLeft ? 'links' : 'rechts'}, dus de stroom gaat ${plusLeft ? 'omhoog' : 'omlaag'} door R<sub>2</sub>: i′ = ${plusLeft ? '−' : '+'}e/(R<sub>1</sub> + R<sub>2</sub>) = ${plusLeft ? '−' : ''}${fmt(E)}/${fmt(R1 + R2)} = ${fmt(i1)} A.`,
-      `<b>Alleen I<sub>s</sub></b> (e kortgesloten): beide bovenknopen worden één knoop en R<sub>3</sub> is kortgesloten. R<sub>1</sub> en R<sub>2</sub> staan parallel; stroomdeler: i″ = I<sub>s</sub>·R<sub>1</sub>/(R<sub>1</sub> + R<sub>2</sub>) = ${fmt(Is)}·${fmt(R1)}/${fmt(R1 + R2)} = ${fmt(i2)} A.`,
+      `<b>Alleen ${m`e`}</b> (${m`I_s`} open): ${m`R_3`} staat direct parallel aan ${m`e`} en verandert niets aan de rest. Er blijft één lus over: ${m`e`}, ${m`R_2`}, massa, ${m`R_1`}. De + van ${m`e`} zit ${plusLeft ? 'links' : 'rechts'}, dus de stroom gaat ${plusLeft ? 'omhoog' : 'omlaag'} door ${m`R_2`}:${d`i' = ${plusLeft ? '-' : ''}\frac{e}{R_1 + R_2} = ${plusLeft ? '-' : ''}\frac{${E}}{${R1} + ${R2}} = ${i1}\,\mathrm{A}`}`,
+      `<b>Alleen ${m`I_s`}</b> (${m`e`} kortgesloten): beide bovenknopen worden één knoop en ${m`R_3`} is kortgesloten. ${m`R_1`} en ${m`R_2`} staan parallel, dus een stroomdeler:${d`i'' = I_s \cdot \frac{R_1}{R_1 + R_2} = ${Is} \cdot \frac{${R1}}{${R1} + ${R2}} = ${i2}\,\mathrm{A}`}`,
     ],
-    variants: contributions('i', { source: 'de spanningsbron e', value: i1 }, { source: 'de stroombron I<sub>s</sub>', value: i2 }, ['R2']),
+    variants: contributions({ source: 'de spanningsbron e', value: i1 }, { source: 'de stroombron I<sub>s</sub>', value: i2 }, ['R2']),
     circuit: {
       wires: [
         [[0, 0], [0, 1]],
@@ -184,6 +193,11 @@ function floatingSource(): Built {
   };
 }
 
+/**
+ * Every template's steps are [plan, contribution of source 1, contribution of
+ * source 2], and its variants [i′, i″, i] in that order — the practice chain
+ * below relies on that.
+ */
 /** Each difficulty level unlocks harder topologies, in the order the lessons introduced them. */
 const TEMPLATES_BY_LEVEL: ReadonlyArray<ReadonlyArray<() => Built>> = [[vAndI], [twoVoltages, twoCurrents], [floatingSource]];
 
@@ -191,6 +205,15 @@ export function buildSuperposition(level: number): Built {
   return pick(TEMPLATES_BY_LEVEL.slice(0, level + 1).flat())();
 }
 
+/** Practice walks through the method on one circuit: i′ first, then i″, then the total — each with only its own steps. */
 export function generateSuperposition(streak = 0): Problem {
-  return problemFrom('superposition', 'theorem', buildSuperposition(difficultyLevel(streak)));
+  const built = buildSuperposition(difficultyLevel(streak));
+  const [plan, first, second] = built.steps;
+  const step = (n: number, steps: string[]): Problem => ({
+    ...problemFrom('superposition', 'theorem', { ...built, steps, variants: [built.variants[n]] }),
+    title: `${built.title} · stap ${n + 1} van 3`,
+  });
+  const total = step(2, [plan, first, second]);
+  const middle = { ...step(1, [plan, second]), next: total };
+  return { ...step(0, [plan, first]), next: middle };
 }

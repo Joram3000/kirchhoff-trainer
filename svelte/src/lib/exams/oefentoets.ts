@@ -1,5 +1,6 @@
 import type { Exam, ExamQuestion } from '../types';
 import { abTerminals } from '../generators/built';
+import { m, d } from '../utils/tex';
 import { part, grid } from './helpers';
 
 /** "Oefentoets DC" from the course, figures redrawn; the worked solutions are ours. */
@@ -20,23 +21,24 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a.1', `Bereken de stroombron-spanning v<sub>I</sub>.`, 'V', 40, 3, [
-        `Alles zit in één lus, dus overal loopt dezelfde stroom: i<sub>R</sub> = I = 5 A (met de klok mee).`,
-        `KVL met de klok mee: v<sub>I</sub> − i<sub>R</sub>·R − e = 0 → v<sub>I</sub> = 5·5 + 15 = <b>40 V</b>.`,
+        `Alles zit in één lus, dus overal loopt dezelfde stroom (met de klok mee):${d`i_R = I = 5\,\mathrm{A}`}`,
+        `KVL met de klok mee (van − naar + is een stijging):${d`\begin{aligned}
+          v_I - i_R\,R - e &= 0 \\
+          v_I &= 5 \cdot 5 + 15 = \boxed{40\,\mathrm{V}}
+        \end{aligned}`}`,
       ]),
       part('a.2', `Bereken de spanningsbron-stroom i<sub>e</sub>.`, 'A', 5, 2, [
-        `Serieschakeling: door de spanningsbron loopt dezelfde stroom als door de stroombron. i<sub>e</sub> = I = <b>5 A</b>.`,
+        `Serieschakeling: door de spanningsbron loopt dezelfde stroom als door de stroombron.${d`i_e = I = \boxed{5\,\mathrm{A}}`}`,
       ]),
       part('b.1', `Bepaal het vermogen dat de <b>stroombron</b> opneemt (positief = opgenomen, negatief = geleverd).`, 'W', -200, 4, [
-        `De stroom komt er boven, aan de + kant van v<sub>I</sub>, uit: de bron <b>levert</b>.`,
-        `P<sub>I</sub> = −v<sub>I</sub>·I = −40·5 = <b>−200 W</b> (200 W geleverd).`,
+        `De stroom komt er boven, aan de + kant van ${m`v_I`}, uit: de bron <b>levert</b>.${d`P_I = -v_I \cdot I = -40 \cdot 5 = \boxed{-200\,\mathrm{W}}`}Dus 200 W geleverd.`,
       ]),
       part('b.2', `Bepaal het vermogen dat de <b>weerstand</b> opneemt.`, 'W', 125, 3, [
-        `P<sub>R</sub> = i<sub>R</sub>²·R = 5²·5 = <b>125 W</b> (opgenomen).`,
+        `Een weerstand neemt altijd op:${d`P_R = i_R^2 \cdot R = 5^2 \cdot 5 = \boxed{125\,\mathrm{W}}`}`,
       ]),
       part('b.3', `Bepaal het vermogen dat de <b>spanningsbron</b> opneemt (positief = opgenomen, negatief = geleverd).`, 'W', 75, 3, [
-        `De stroom loopt de spanningsbron in aan de + kant: de bron <b>neemt op</b> (hij wordt geladen).`,
-        `P<sub>e</sub> = +e·i<sub>e</sub> = 15·5 = <b>75 W</b> (opgenomen).`,
-        `Controle: −200 + 125 + 75 = 0 ✓`,
+        `De stroom loopt de spanningsbron in aan de + kant: de bron <b>neemt op</b> (hij wordt geladen).${d`P_e = +e \cdot i_e = 15 \cdot 5 = \boxed{75\,\mathrm{W}}`}`,
+        `Controle:${d`P_I + P_R + P_e = -200 + 125 + 75 = 0 \;\checkmark`}`,
       ]),
     ],
   },
@@ -64,17 +66,18 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Bepaal de spanning v met de methode van vervangingsweerstanden.`, 'V', 200, 10, [
-        `R<sub>1</sub> en R<sub>2</sub> staan parallel: 18 ∥ 9 = 18·9/27 = 6 Ω. R<sub>3</sub> en R<sub>4</sub> staan parallel: 10 ∥ 40 = 400/50 = 8 Ω.`,
-        `Er blijft één lus over: de stroombron, 8 Ω, R<sub>5</sub> = 6 Ω en 6 Ω in serie. R<sub>v</sub> = 6 + 6 + 8 = 20 Ω.`,
-        `De volle 10 A loopt door R<sub>v</sub>: v = I·R<sub>v</sub> = 10·20 = <b>200 V</b> (+ rechts: de bron levert).`,
+        `Combineer de parallelle paren:${d`\begin{aligned}
+          R_1 \parallel R_2 &= \frac{18 \cdot 9}{18 + 9} = 6\,\Omega \\
+          R_3 \parallel R_4 &= \frac{10 \cdot 40}{10 + 40} = 8\,\Omega
+        \end{aligned}`}`,
+        `Er blijft één lus over: de stroombron met 6 Ω, ${m`R_5`} en 8 Ω in serie.${d`R_v = 6 + 6 + 8 = 20\,\Omega`}`,
+        `De volle 10 A loopt door ${m`R_v`} (+ rechts: de bron levert):${d`v = I \cdot R_v = 10 \cdot 20 = \boxed{200\,\mathrm{V}}`}`,
       ]),
       part('b.1', `Bepaal de stroom i<sub>1</sub> met stroomdeling.`, 'A', 10 / 3, 5, [
-        `De 10 A gaat omhoog door de parallelcombinatie R<sub>1</sub> ∥ R<sub>2</sub>.`,
-        `i<sub>1</sub> = I·R<sub>2</sub>/(R<sub>1</sub> + R<sub>2</sub>) = 10·9/27 = <b>3,33 A</b>.`,
+        `De 10 A gaat omhoog door de parallelcombinatie ${m`R_1 \parallel R_2`}. Stroomdeler:${d`i_1 = I \cdot \frac{R_2}{R_1 + R_2} = 10 \cdot \frac{9}{27} = \boxed{3{,}33\,\mathrm{A}}`}`,
       ]),
       part('b.2', `Bepaal de stroom i<sub>2</sub> met stroomdeling.`, 'A', 8, 5, [
-        `De 10 A gaat omlaag door R<sub>3</sub> ∥ R<sub>4</sub>.`,
-        `i<sub>2</sub> = I·R<sub>4</sub>/(R<sub>3</sub> + R<sub>4</sub>) = 10·40/50 = <b>8 A</b>.`,
+        `De 10 A gaat omlaag door ${m`R_3 \parallel R_4`}. Stroomdeler:${d`i_2 = I \cdot \frac{R_4}{R_3 + R_4} = 10 \cdot \frac{40}{50} = \boxed{8\,\mathrm{A}}`}`,
       ]),
     ],
   },
@@ -96,14 +99,19 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Bepaal de waarde van R<sub>2</sub>.`, 'Ω', 20, 8, [
-        `Schakelaar open: e, R<sub>1</sub> en R<sub>2</sub> vormen een gewone spanningsdeler.`,
-        `Over R<sub>1</sub> staat 32 − 20 = 12 V, dus i = 12/12 = 1 A.`,
-        `R<sub>2</sub> = v/i = 20/1 = <b>20 Ω</b>.`,
+        `Schakelaar open: ${m`e`}, ${m`R_1`} en ${m`R_2`} vormen een gewone spanningsdeler. Over ${m`R_1`} staat het verschil, en daar volgt de stroom uit:${d`\begin{aligned}
+          v_{R_1} &= 32 - 20 = 12\,\mathrm{V} \\
+          i &= \frac{12}{12} = 1\,\mathrm{A} \\
+          R_2 &= \frac{v}{i} = \frac{20}{1} = \boxed{20\,\Omega}
+        \end{aligned}`}`,
       ]),
       part('b', `Bepaal de waarde van R<sub>3</sub>.`, 'Ω', 30, 7, [
-        `Schakelaar dicht: R<sub>3</sub> komt parallel aan R<sub>2</sub>. Over R<sub>1</sub> staat nu 32 − 16 = 16 V, dus i = 16/12 = 1,33 A.`,
-        `R<sub>2</sub> ∥ R<sub>3</sub> = 16/1,333 = 12 Ω.`,
-        `1/R<sub>3</sub> = 1/12 − 1/20 = 2/60 → R<sub>3</sub> = <b>30 Ω</b>.`,
+        `Schakelaar dicht: ${m`R_3`} komt parallel aan ${m`R_2`}. Bepaal eerst de parallelwaarde:${d`\begin{aligned}
+          v_{R_1} &= 32 - 16 = 16\,\mathrm{V} \\
+          i &= \frac{16}{12} = 1{,}33\,\mathrm{A} \\
+          R_2 \parallel R_3 &= \frac{16}{1{,}333} = 12\,\Omega
+        \end{aligned}`}`,
+        `Reken terug naar ${m`R_3`}:${d`\frac{1}{R_3} = \frac{1}{12} - \frac{1}{20} = \frac{2}{60} \;\Rightarrow\; R_3 = \boxed{30\,\Omega}`}`,
       ]),
     ],
   },
@@ -137,11 +145,22 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: (() => {
       const steps = [
-        `KCL in knoop 1 (verlatende stromen = 0): v<sub>1</sub>/12 + (v<sub>1</sub> − v<sub>2</sub>)/6 + (v<sub>1</sub> − v<sub>3</sub>)/6 = 0 → (×12) 5v<sub>1</sub> − 2v<sub>2</sub> − 2v<sub>3</sub> = 0`,
-        `KCL in knoop 2 (de bron duwt 3 A knoop 2 in): (v<sub>2</sub> − v<sub>1</sub>)/6 + v<sub>2</sub>/24 = 3 → (×24) −4v<sub>1</sub> + 5v<sub>2</sub> = 72`,
-        `KCL in knoop 3 (de bron trekt 3 A uit knoop 3): v<sub>3</sub>/6 + (v<sub>3</sub> − v<sub>1</sub>)/6 = −3 → (×6) −v<sub>1</sub> + 2v<sub>3</sub> = −18`,
-        `Uit knoop 2 en 3: v<sub>2</sub> = (72 + 4v<sub>1</sub>)/5 en v<sub>3</sub> = (v<sub>1</sub> − 18)/2. Invullen in knoop 1 (×5): 25v<sub>1</sub> − 144 − 8v<sub>1</sub> − 5v<sub>1</sub> + 90 = 0 → 12v<sub>1</sub> = 54.`,
-        `v<sub>1</sub> = <b>4,5 V</b>, v<sub>2</sub> = (72 + 18)/5 = <b>18 V</b>, v<sub>3</sub> = (4,5 − 18)/2 = <b>−6,75 V</b>.`,
+        `KCL per knoop: de stromen die de knoop verlaten zijn samen gelijk aan de bronstroom erin. De bron duwt 3 A knoop 2 in en trekt 3 A uit knoop 3.${d`\begin{aligned}
+          \text{knoop 1:}\quad & \frac{v_1}{12} + \frac{v_1 - v_2}{6} + \frac{v_1 - v_3}{6} = 0 \\[4pt]
+          \text{knoop 2:}\quad & \frac{v_2 - v_1}{6} + \frac{v_2}{24} = 3 \\[4pt]
+          \text{knoop 3:}\quad & \frac{v_3}{6} + \frac{v_3 - v_1}{6} = -3
+        \end{aligned}`}`,
+        `Vermenigvuldig met de noemers (×12, ×24, ×6) om de breuken kwijt te raken:${d`\left\{\begin{aligned}
+          5v_1 - 2v_2 - 2v_3 &= 0 \\
+          -4v_1 + 5v_2 &= 72 \\
+          -v_1 + 2v_3 &= -18
+        \end{aligned}\right.`}`,
+        `Druk ${m`v_2`} en ${m`v_3`} uit in ${m`v_1`} en vul in bij de eerste vergelijking (×5):${d`\begin{aligned}
+          v_2 &= \frac{72 + 4v_1}{5}, \qquad v_3 = \frac{v_1 - 18}{2} \\
+          25v_1 - 2(72 + 4v_1) - 5(v_1 - 18) &= 0 \\
+          12v_1 &= 54
+        \end{aligned}`}`,
+        `Dus:${d`v_1 = \boxed{4{,}5\,\mathrm{V}} \qquad v_2 = \frac{72 + 18}{5} = \boxed{18\,\mathrm{V}} \qquad v_3 = \frac{4{,}5 - 18}{2} = \boxed{-6{,}75\,\mathrm{V}}`}`,
       ];
       return [
         part('a', `Bepaal v<sub>1</sub>.`, 'V', 4.5, 5, steps),
@@ -173,15 +192,16 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a', `Stap 1: alleen e aan (stroombron open). Bepaal de bijdrage i′.`, 'A', -1, 5, [
-        `Stroombron uit → open. R<sub>3</sub> staat direct parallel aan e en doet voor de rest niet mee.`,
-        `Er blijft één lus: e, R<sub>2</sub>, massa, R<sub>1</sub>. De + van e zit links, dus de stroom gaat omhoog door R<sub>2</sub>.`,
-        `i′ = −e/(R<sub>1</sub> + R<sub>2</sub>) = −15/15 = <b>−1 A</b>.`,
+        `Stroombron uit → open. ${m`R_3`} staat direct parallel aan ${m`e`} en doet voor de rest niet mee.`,
+        `Er blijft één lus: ${m`e`}, ${m`R_2`}, massa, ${m`R_1`}. De + van ${m`e`} zit links, dus de stroom gaat omhoog door ${m`R_2`} — tegen de pijl in:${d`i' = -\frac{e}{R_1 + R_2} = -\frac{15}{5 + 10} = \boxed{-1\,\mathrm{A}}`}`,
       ]),
       part('b', `Stap 2: alleen I aan (spanningsbron kortgesloten). Bepaal de bijdrage i″.`, 'A', 2 / 3, 5, [
-        `Spanningsbron uit → kortsluiting. De twee bovenknopen worden één knoop en R<sub>3</sub> is kortgesloten.`,
-        `R<sub>1</sub> en R<sub>2</sub> staan parallel; stroomdeler: i″ = I·R<sub>1</sub>/(R<sub>1</sub> + R<sub>2</sub>) = 2·5/15 = <b>0,67 A</b>.`,
+        `Spanningsbron uit → kortsluiting. De twee bovenknopen worden één knoop en ${m`R_3`} is kortgesloten.`,
+        `${m`R_1`} en ${m`R_2`} staan parallel, dus een stroomdeler:${d`i'' = I \cdot \frac{R_1}{R_1 + R_2} = 2 \cdot \frac{5}{15} = \boxed{0{,}67\,\mathrm{A}}`}`,
       ]),
-      part('c', `Stap 3: bepaal de stroom i.`, 'A', -1 / 3, 5, [`i = i′ + i″ = −1 + 0,67 = <b>−0,33 A</b> (de stroom loopt dus omhoog door R<sub>2</sub>).`]),
+      part('c', `Stap 3: bepaal de stroom i.`, 'A', -1 / 3, 5, [
+        `Tel de bijdragen op:${d`i = i' + i'' = -1 + 0{,}67 = \boxed{-0{,}33\,\mathrm{A}}`}De stroom loopt dus omhoog door ${m`R_2`}.`,
+      ]),
     ],
   },
   {
@@ -205,19 +225,17 @@ const QUESTIONS: ExamQuestion[] = [
     }),
     parts: [
       part('a.1', `Thévenin: bepaal R<sub>t</sub>.`, 'Ω', 5, 4, [
-        `Spanningsbron kortsluiten, stroombron openen. Vanaf a-b staan de twee 10 Ω-weerstanden parallel: R<sub>t</sub> = 10 ∥ 10 = <b>5 Ω</b>.`,
+        `Spanningsbron kortsluiten, stroombron openen. Vanaf a-b staan de twee 10 Ω-weerstanden parallel:${d`R_t = 10 \parallel 10 = \frac{10 \cdot 10}{10 + 10} = \boxed{5\,\Omega}`}`,
       ]),
       part('a.2', `Thévenin: bepaal V<sub>t</sub>.`, 'V', 15, 4, [
-        `Kortsluitstroom (zie b): I<sub>n</sub> = 3 A. V<sub>t</sub> = I<sub>n</sub>·R<sub>t</sub> = 3·5 = <b>15 V</b>.`,
-        `Controle met KCL in a: (V<sub>t</sub> − 10)/10 + V<sub>t</sub>/10 = 2 → 2V<sub>t</sub> = 30 → V<sub>t</sub> = 15 V ✓`,
+        `Met de kortsluitstroom uit onderdeel b (3 A):${d`V_t = I_n \cdot R_t = 3 \cdot 5 = \boxed{15\,\mathrm{V}}`}`,
+        `Controle met KCL in a (open klemmen):${d`\frac{V_t - 10}{10} + \frac{V_t}{10} = 2 \;\Rightarrow\; 2V_t = 30 \;\Rightarrow\; V_t = 15\,\mathrm{V} \;\checkmark`}`,
       ]),
       part('b', `Norton: bepaal de Norton-stroom I<sub>n</sub> (van a naar b door de kortsluiting).`, 'A', 3, 6, [
-        `Sluit a-b kort: over de rechter 10 Ω staat dan 0 V, er loopt niets door.`,
-        `Door de linker 10 Ω: 10 V/10 Ω = 1 A, plus de 2 A van de stroombron: I<sub>n</sub> = 1 + 2 = <b>3 A</b>. Het Norton-schema is 3 A parallel aan 5 Ω.`,
+        `Sluit a-b kort: over de rechter 10 Ω staat dan 0 V, er loopt niets door. Door de linker 10 Ω komt 1 A, plus de 2 A van de stroombron:${d`I_n = \frac{10}{10} + 2 = \boxed{3\,\mathrm{A}}`}Het Norton-schema is 3 A parallel aan 5 Ω.`,
       ]),
       part('c', `Er wordt een belasting R<sub>load</sub> = 10 Ω op a-b aangesloten. Bepaal de stroom door R<sub>load</sub>.`, 'A', 1, 6, [
-        `Gebruik het Thévenin-schema: 15 V in serie met 5 Ω, belast met 10 Ω.`,
-        `i<sub>load</sub> = V<sub>t</sub>/(R<sub>t</sub> + R<sub>load</sub>) = 15/(5 + 10) = <b>1 A</b>.`,
+        `Gebruik het Thévenin-schema: 15 V in serie met 5 Ω, belast met 10 Ω.${d`i_{\text{load}} = \frac{V_t}{R_t + R_{\text{load}}} = \frac{15}{5 + 10} = \boxed{1\,\mathrm{A}}`}`,
       ]),
     ],
   },

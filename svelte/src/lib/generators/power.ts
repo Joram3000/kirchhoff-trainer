@@ -1,13 +1,10 @@
 import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
-import { fmt } from '../utils/format';
-import { variant, problemFrom, ohm, volt, amp, type Built } from './built';
-
-/** Wraps negatives in parentheses so substitutions like "5 · (−3)" read correctly. */
-const p = (n: number) => (n < 0 ? `(${fmt(n)})` : fmt(n));
+import { m, d, par } from '../utils/tex';
+import { variant, answerStep, problemFrom, ohm, volt, amp, type Built } from './built';
 
 const CONVENTION =
-  `Passieve tekenconventie: loopt de stroom een element <b>in aan de + kant</b>, dan neemt het vermogen op: P = +v·i. Komt de stroom er <b>aan de + kant uit</b>, dan levert het: P = −v·i. Positief = opgenomen, negatief = geleverd.`;
+  `Passieve tekenconventie: loopt de stroom een element <b>in aan de + kant</b>, dan neemt het vermogen op: ${m`P = +v\,i`}. Komt de stroom er <b>aan de + kant uit</b>, dan levert het: ${m`P = -v\,i`}. Positief = opgenomen, negatief = geleverd.`;
 
 const absorbed = (P: number) => (P >= 0 ? 'opgenomen' : 'geleverd');
 
@@ -28,26 +25,29 @@ export function buildPowerLoop(): Built {
   const PI = -vI * Is;
 
   const steps = [
-    `Er is maar één lus, dus overal loopt dezelfde stroom. De stroombron legt die vast: i = I<sub>s</sub> = ${fmt(Is)} A, met de klok mee.`,
-    `KVL met de klok mee (van − naar + is een stijging): v<sub>I</sub> − i·R ${plusTop ? '−' : '+'} e = 0 → v<sub>I</sub> = ${fmt(Is)}·${fmt(R)} ${plusTop ? '+' : '−'} ${fmt(E)} = ${fmt(vI)} V.`,
+    `Er is maar één lus, dus overal loopt dezelfde stroom. De stroombron legt die vast (met de klok mee):${d`i = I_s = ${Is}\,\mathrm{A}`}`,
+    `KVL met de klok mee (van − naar + is een stijging):${d`\begin{aligned}
+      v_I - i\,R ${plusTop ? '-' : '+'} e &= 0 \\
+      v_I &= ${Is} \cdot ${R} ${plusTop ? '+' : '-'} ${E} = ${vI}\,\mathrm{V}
+    \end{aligned}`}`,
     CONVENTION,
-    `Weerstand: P<sub>R</sub> = i²·R = ${fmt(Is)}²·${fmt(R)} = ${fmt(PR)} W (opgenomen — een weerstand neemt altijd op).`,
+    `Weerstand — die neemt altijd op:${d`P_R = i^2 R = ${Is}^2 \cdot ${R} = ${PR}\,\mathrm{W}`}`,
     plusTop
-      ? `Spanningsbron: de stroom loopt de bron in aan de + kant → P<sub>e</sub> = +e·i = ${fmt(E)}·${fmt(Is)} = ${fmt(Pe)} W (opgenomen; de bron wordt als het ware opgeladen).`
-      : `Spanningsbron: de stroom loopt de bron in aan de − kant, dus komt er aan de + kant uit → P<sub>e</sub> = −e·i = ${fmt(Pe)} W (geleverd).`,
-    `Stroombron: de stroom komt er boven, aan de + kant van v<sub>I</sub>, uit → P<sub>I</sub> = −v<sub>I</sub>·i = −${p(vI)}·${fmt(Is)} = ${fmt(PI)} W (${absorbed(PI)}).`,
-    `Controle: ΣP = ${fmt(PI)} + ${fmt(PR)} + ${p(Pe)} = 0 ✓ — wat geleverd wordt, wordt ook opgenomen.`,
+      ? `Spanningsbron: de stroom loopt de bron in aan de + kant, dus hij neemt op (hij wordt als het ware opgeladen):${d`P_e = +e\,i = ${E} \cdot ${Is} = ${Pe}\,\mathrm{W}`}`
+      : `Spanningsbron: de stroom loopt de bron in aan de − kant en komt er aan de + kant uit, dus hij levert:${d`P_e = -e\,i = -${E} \cdot ${Is} = ${Pe}\,\mathrm{W}`}`,
+    `Stroombron: de stroom komt er boven, aan de + kant van ${m`v_I`}, uit (${absorbed(PI)}):${d`P_I = -v_I\,i = -${par(vI)} \cdot ${Is} = ${PI}\,\mathrm{W}`}`,
+    `Controle — wat geleverd wordt, wordt ook opgenomen:${d`P_I + P_R + P_e = ${PI} + ${PR} + ${par(Pe)} = 0 \;\checkmark`}`,
   ];
 
   return {
     title: 'Vermogen · serielus',
     steps,
     variants: [
-      variant(`Bereken de spanning v<sub>I</sub> over de stroombron (+ aan de bovenkant).`, 'V', vI, [], ['I']),
-      variant(powerQuestion('de stroombron'), 'W', PI, [], ['I']),
-      variant(powerQuestion('de spanningsbron'), 'W', Pe, [], ['e']),
-      variant(powerQuestion('de weerstand'), 'W', PR, [], ['R']),
-      variant(`Bereken de stroom i<sub>e</sub> door de spanningsbron (richting zoals aangegeven).`, 'A', Is, [], ['e']),
+      variant(`Bereken de spanning v<sub>I</sub> over de stroombron (+ aan de bovenkant).`, 'V', vI, [answerStep('v_I', vI, 'V')], ['I']),
+      variant(powerQuestion('de stroombron'), 'W', PI, [answerStep('P_I', PI, 'W')], ['I']),
+      variant(powerQuestion('de spanningsbron'), 'W', Pe, [answerStep('P_e', Pe, 'W')], ['e']),
+      variant(powerQuestion('de weerstand'), 'W', PR, [answerStep('P_R', PR, 'W')], ['R']),
+      variant(`Bereken de stroom i<sub>e</sub> door de spanningsbron (richting zoals aangegeven).`, 'A', Is, [answerStep('i_e', Is, 'A')], ['e']),
     ],
     circuit: {
       wires: [[[0, 2], [2.6, 2]]],
@@ -82,26 +82,29 @@ function parallelBank(): Built {
   const PR = (E * E) / R;
 
   const steps = [
-    `Alle drie de elementen zitten tussen dezelfde twee knooppunten, dus over elk staat dezelfde spanning: v = e = ${fmt(E)} V (+ boven).`,
-    `Wet van Ohm: i<sub>R</sub> = e/R = ${fmt(E)}/${fmt(R)} = ${fmt(iR)} A (naar beneden).`,
-    `KCL in het bovenste knooppunt: i<sub>e</sub> ${up ? '+' : '−'} I<sub>s</sub> = i<sub>R</sub> → i<sub>e</sub> = ${fmt(iR)} ${up ? '−' : '+'} ${fmt(Is)} = ${fmt(ie)} A (omhoog, de bron uit aan de + kant).`,
+    `Alle drie de elementen zitten tussen dezelfde twee knooppunten, dus over elk staat dezelfde spanning (+ boven):${d`v = e = ${E}\,\mathrm{V}`}`,
+    `Wet van Ohm voor de weerstand (stroom naar beneden):${d`i_R = \frac{e}{R} = \frac{${E}}{${R}} = ${iR}\,\mathrm{A}`}`,
+    `KCL in het bovenste knooppunt, met ${m`i_e`} omhoog uit de bron:${d`\begin{aligned}
+      i_e ${up ? '+' : '-'} I_s &= i_R \\
+      i_e &= ${iR} ${up ? '-' : '+'} ${Is} = ${ie}\,\mathrm{A}
+    \end{aligned}`}`,
     CONVENTION,
-    `Spanningsbron: i<sub>e</sub> komt er aan de + kant uit → P<sub>e</sub> = −e·i<sub>e</sub> = −${fmt(E)}·${p(ie)} = ${fmt(Pe)} W (${absorbed(Pe)}).`,
+    `Spanningsbron: ${m`i_e`} komt er aan de + kant uit (${absorbed(Pe)}):${d`P_e = -e\,i_e = -${E} \cdot ${par(ie)} = ${Pe}\,\mathrm{W}`}`,
     up
-      ? `Stroombron: de stroom komt er boven, aan de + kant, uit → P<sub>I</sub> = −v·I<sub>s</sub> = −${fmt(E)}·${fmt(Is)} = ${fmt(PI)} W (geleverd).`
-      : `Stroombron: de stroom loopt er boven, aan de + kant, in → P<sub>I</sub> = +v·I<sub>s</sub> = ${fmt(E)}·${fmt(Is)} = ${fmt(PI)} W (opgenomen).`,
-    `Weerstand: P<sub>R</sub> = e²/R = ${fmt(E)}²/${fmt(R)} = ${fmt(PR)} W (opgenomen).`,
-    `Controle: ΣP = ${fmt(Pe)} + ${p(PI)} + ${fmt(PR)} = 0 ✓`,
+      ? `Stroombron: de stroom komt er boven, aan de + kant, uit (geleverd):${d`P_I = -v\,I_s = -${E} \cdot ${Is} = ${PI}\,\mathrm{W}`}`
+      : `Stroombron: de stroom loopt er boven, aan de + kant, in (opgenomen):${d`P_I = +v\,I_s = ${E} \cdot ${Is} = ${PI}\,\mathrm{W}`}`,
+    `Weerstand (opgenomen):${d`P_R = \frac{e^2}{R} = \frac{${E}^2}{${R}} = ${PR}\,\mathrm{W}`}`,
+    `Controle:${d`P_e + P_I + P_R = ${Pe} + ${par(PI)} + ${PR} = 0 \;\checkmark`}`,
   ];
 
   return {
     title: 'Vermogen · parallel',
     steps,
     variants: [
-      variant(`Bereken de stroom i<sub>e</sub> door de spanningsbron (richting zoals aangegeven).`, 'A', ie, [], ['e']),
-      variant(powerQuestion('de spanningsbron'), 'W', Pe, [], ['e']),
-      variant(powerQuestion('de stroombron'), 'W', PI, [], ['I']),
-      variant(powerQuestion('de weerstand'), 'W', PR, [], ['R']),
+      variant(`Bereken de stroom i<sub>e</sub> door de spanningsbron (richting zoals aangegeven).`, 'A', ie, [answerStep('i_e', ie, 'A')], ['e']),
+      variant(powerQuestion('de spanningsbron'), 'W', Pe, [answerStep('P_e', Pe, 'W')], ['e']),
+      variant(powerQuestion('de stroombron'), 'W', PI, [answerStep('P_I', PI, 'W')], ['I']),
+      variant(powerQuestion('de weerstand'), 'W', PR, [answerStep('P_R', PR, 'W')], ['R']),
     ],
     circuit: {
       wires: [

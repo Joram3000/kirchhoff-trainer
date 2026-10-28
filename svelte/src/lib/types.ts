@@ -23,7 +23,7 @@ export type CategoryId =
   | 'superposition';
 
 /** Top-level section of the app. */
-export type View = 'practice' | 'theory' | 'exam';
+export type View = 'practice' | 'theory' | 'lab' | 'exam';
 
 /** Compass-style position of a branch/side around a circuit's central shape. */
 export type Position = 'boven' | 'rechts' | 'onder' | 'links';
@@ -120,7 +120,10 @@ export type GridElement = {
   /** Ohms, volts or amps — not drawn, but keeps the figure self-describing for analysis. */
   value?: number;
   /** Reference arrow alongside the element; defaults to the side opposite the label. */
-  current?: { label: string; toward: 'from' | 'to'; side?: Side };
+  /** `toned` draws arrow and value in the current color (see `.lbl-current`), as in the playground. */
+  current?: { label: string; toward: 'from' | 'to'; side?: Side; toned?: boolean };
+  /** Current from `from` to `to` in amps, animated as moving dots along the leads (playground). */
+  flow?: number;
   /** + and − marks at the element's ends with an optional name between them. */
   polarity?: { plus: 'from' | 'to'; label?: string; side?: Side };
 } & (
@@ -145,7 +148,8 @@ export interface GridText {
   text: string;
   anchor?: 'start' | 'middle' | 'end';
   /** `sign` for bold +/− marks, `hint` for small secondary text. */
-  style?: 'lbl' | 'sign' | 'hint';
+  /** `voltage` colors the text like a node voltage. */
+  style?: 'lbl' | 'sign' | 'hint' | 'voltage';
   id?: string;
 }
 
@@ -165,6 +169,10 @@ export interface GridSpec {
   ground?: Pt;
   /** Ids of elements, arrows and texts to draw in the accent color. */
   highlight?: string[];
+  /** A fixed viewBox instead of fitting one around the labels — for figures whose labels change live. */
+  frame?: string;
+  /** Currents through wire pieces, animated like `GridElement.flow`. */
+  flows?: { from: Pt; to: Pt; amps: number }[];
 }
 
 /**
@@ -197,6 +205,8 @@ export interface Problem {
   tolerance: number;
   steps: string[];
   circuit: CircuitSpec;
+  /** A follow-up question on the same circuit, asked next instead of a fresh problem (superposition's steps). */
+  next?: Problem;
 }
 
 export interface CategoryStats {
@@ -204,6 +214,8 @@ export interface CategoryStats {
   correct: number;
   streak: number;
   best: number;
+  /** Ticked by the student: counts as mastered regardless of the streak. */
+  markedMastered?: boolean;
 }
 
 /**

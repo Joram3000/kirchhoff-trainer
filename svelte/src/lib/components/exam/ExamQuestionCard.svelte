@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ExamQuestion } from '../../types';
   import { fmt } from '../../utils/format';
+  import { renderMath } from '../../utils/tex';
   import CircuitDiagram from '../circuits/CircuitDiagram.svelte';
   import StepsPanel from '../ui/StepsPanel.svelte';
 
@@ -35,7 +36,7 @@
 
     <div class="exam-q-text">
       <!-- Intro, questions, choices and steps are trusted HTML fragments authored in src/lib/exams. -->
-      <p class="exam-intro">{@html question.intro}</p>
+      <p class="exam-intro">{@html renderMath(question.intro)}</p>
 
       {#each question.parts as part, pi (pi)}
         {@const key = `${keyPrefix}.${pi}`}
@@ -43,7 +44,7 @@
         <div class="exam-part" class:good={ok === true} class:bad={ok === false}>
           <div class="exam-part-head">
             <span class="part-label">{part.label}</span>
-            <p class="question-text">{@html part.question}</p>
+            <p class="question-text">{@html renderMath(part.question)}</p>
             <span class="part-points">{part.points} pnt</span>
           </div>
 
@@ -58,7 +59,7 @@
                     disabled={results !== null}
                     onchange={() => onAnswer(key, String(ci))}
                   />
-                  <span>{@html c}</span>
+                  <span>{@html renderMath(c)}</span>
                 </label>
               {/each}
             </div>
@@ -83,7 +84,7 @@
               {#if ok}
                 ✓ Goed — {part.points} pnt
               {:else if part.choices}
-                ✗ Juist antwoord: {@html part.choices[part.answer]}
+                ✗ Juist antwoord: {@html renderMath(part.choices[part.answer])}
               {:else}
                 ✗ Juist antwoord: {fmt(part.answer)} {part.unit}
               {/if}

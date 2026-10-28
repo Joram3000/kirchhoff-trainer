@@ -20,6 +20,10 @@ Bij een reeks goede antwoorden worden de schakelingen groter en lastiger.
 
 **Theorie** — beknopt overzicht per week, in lijn met het formuleblad.
 
+**Speeltuin** — schakelingen uit de lesstof waarin je weerstanden en bronnen aanpast (of een bron uitzet) en live alle knooppuntspanningen, stromen, vermogens en de KCL- en KVL-vergelijkingen ziet.
+
+**Kladblok** — tekst met ingebouwde rekenmachine (typ `=` achter een som; `//` is parallel), of tekenen over het schema van de opgave heen.
+
 **Tentamenhoek** — oefenen zoals op het tentamen: alles invullen en pas aan het eind nakijken, met score, cijferindicatie en uitwerkingen per deelvraag:
 
 - Proeftoets (willekeurig): elke keer een nieuwe toets van 100 punten met alle tentamenonderwerpen

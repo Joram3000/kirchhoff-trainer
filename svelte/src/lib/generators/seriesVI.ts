@@ -2,6 +2,7 @@ import type { Problem } from '../types';
 import { niceInt, pick } from '../utils/random';
 import { round2, fmt } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
+import { m, d } from '../utils/tex';
 import type { ResistorTarget } from '../utils/target';
 
 interface Variant {
@@ -26,10 +27,10 @@ export function generateSeriesVI(): Problem {
   const variant = pick(variants);
 
   const steps = [
-    `Belangrijk inzicht: in een serieschakeling loopt overal dezelfde stroom. Een stroombron legt zijn eigen stroom op, dus geldt: I = I<sub>s</sub> = ${fmt(Is)} A — ongeacht de waarden van R en V<sub>s</sub>!`,
-    `Met de wet van Ohm: v<sub>R</sub> = I·R = ${fmt(Is)} × ${fmt(R)} = ${fmt(vR)} V.`,
-    `Met KVL rond de lus: V<sub>s</sub> − v<sub>R</sub> − v<sub>x</sub> = 0  →  v<sub>x</sub> = ${fmt(Vs)} − ${fmt(vR)} = ${fmt(vx)} V.`,
-    `Dus het gevraagde antwoord is ${fmt(variant.answer)} ${variant.unit}.`,
+    `Belangrijk inzicht: in een serieschakeling loopt overal dezelfde stroom. Een stroombron legt zijn eigen stroom op, dus geldt: ${m`I = I_s = ${Is}\,\mathrm{A}`} — ongeacht de waarden van R en V<sub>s</sub>!`,
+    `Met de wet van Ohm:${d`v_R = I \cdot R = ${Is} \cdot ${R} = ${vR}\,\mathrm{V}`}`,
+    `Met KVL rond de lus:${d`\begin{aligned} V_s - v_R - v_x &= 0 \\ v_x &= ${Vs} - ${vR} = ${vx}\,\mathrm{V} \end{aligned}`}`,
+    `Het gevraagde antwoord:${d`\boxed{${variant.answer}\,\mathrm{${variant.unit}}}`}`,
   ];
 
   return {

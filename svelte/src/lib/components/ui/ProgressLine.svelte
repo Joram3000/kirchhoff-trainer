@@ -24,4 +24,12 @@
   {#if scales && level > 0}
     <span class="level-badge">Niveau {level + 1} · grotere schakeling</span>
   {/if}
+  <label class="mastery-toggle">
+    <input
+      type="checkbox"
+      checked={!!stats.markedMastered}
+      onchange={(e) => statsStore.setMarkedMastered(categoryId, e.currentTarget.checked)}
+    />
+    Ik beheers dit onderdeel
+  </label>
 </div>

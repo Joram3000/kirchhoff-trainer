@@ -55,6 +55,13 @@
   {#each p.leads as [ax, ay, bx, by], j (j)}
     <line class="wire" x1={ax} y1={ay} x2={bx} y2={by} />
   {/each}
+{/each}
+
+{#each layout.flows as f, i (i)}
+  <line class="flow" x1={f.x1} y1={f.y1} x2={f.x2} y2={f.y2} style="animation-duration: {f.dur.toFixed(2)}s" />
+{/each}
+
+{#each layout.elements as p, i (i)}
   {#if p.el.kind === 'R'}
     <ResistorSymbol
       cx={p.cx}

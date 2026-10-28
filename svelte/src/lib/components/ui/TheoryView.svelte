@@ -128,16 +128,18 @@
     </p>
   </TheoryCard>
 
-  <TheoryCard title="Oplossen in matrixvorm">
-    <div class="formula">G · v = i</div>
+  <TheoryCard title="Het stelsel oplossen">
     <p>
-      Snelle methode (alleen weerstanden en onafhankelijke stroombronnen): g<sub>kk</sub> = som van de
-      conductanties aan knoop k, g<sub>jk</sub> = −(conductantie tussen j en k), i<sub>k</sub> = bronstroom die knoop
-      k in wordt geduwd.
+      <b>1.</b> Zet elke vergelijking in standaardvorm: de onbekenden links, de bekende getallen rechts.
     </p>
     <p>
+      <b>2.</b> Druk één onbekende uit in de andere (bv. v<sub>2</sub> in v<sub>3</sub>) en vul die in bij de andere
+      vergelijking. Dan houd je één vergelijking met één onbekende over.
+    </p>
+    <p><b>3.</b> Los die op, en vul het antwoord terug in om de andere onbekende te vinden.</p>
+    <p>
       Op het tentamen: is één knooppuntspanning al gegeven, dan houd je twee vergelijkingen met twee onbekenden over.
-      Druk de ene onbekende uit in de andere en vul in.
+      Controleer je antwoord door het in KCL van een knooppunt in te vullen.
     </p>
   </TheoryCard>
 

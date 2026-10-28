@@ -2,6 +2,7 @@ import type { Accent, CategoryId, ExamQuestion, GridSpec, Problem } from '../typ
 import { round2 } from '../utils/format';
 import { toleranceFor } from '../utils/answer';
 import { pick } from '../utils/random';
+import { d, result } from '../utils/tex';
 
 export interface Variant {
   question: string;
@@ -21,6 +22,11 @@ export interface Built {
   steps: string[];
   variants: Variant[];
   circuit: GridSpec;
+}
+
+/** Closing step that states the asked quantity, boxed — for questions whose value the shared steps already derived. */
+export function answerStep(symbol: string, value: number, unit: string): string {
+  return `Het antwoord:${d`${symbol} = ${result(value, unit)}`}`;
 }
 
 export function variant(question: string, unit: string, value: number, extra: string[], highlight?: string[]): Variant {

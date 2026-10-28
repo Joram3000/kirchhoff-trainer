@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { renderMath } from '../../utils/tex';
+
   interface Props {
     /** Any value that changes identity when a new problem starts, to collapse the panel. */
     resetKey: unknown;
@@ -27,8 +29,8 @@
   {#if open}
     <ol class="steps-list">
       {#each steps as step, i (i)}
-        <!-- Steps are trusted HTML fragments generated internally (only <sub>/<b>), never user input. -->
-        <li>{@html step}</li>
+        <!-- Steps are trusted HTML fragments generated internally (<sub>/<b> and \( TeX \)), never user input. -->
+        <li>{@html renderMath(step)}</li>
       {/each}
     </ol>
   {/if}

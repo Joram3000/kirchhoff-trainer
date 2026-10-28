@@ -14,6 +14,7 @@
   import QuestionCard from './lib/components/ui/QuestionCard.svelte';
   import TheoryView from './lib/components/ui/TheoryView.svelte';
   import ExamView from './lib/components/exam/ExamView.svelte';
+  import LabView from './lib/components/lab/LabView.svelte';
   import Scratchpad from './lib/components/ui/Scratchpad.svelte';
   import AppFooter from './lib/components/ui/AppFooter.svelte';
 
@@ -29,10 +30,20 @@
   let feedback = $state<Feedback | null>(null);
   let view = $state<View>('practice');
 
-  function newProblem() {
-    currentProblem = generators[currentCategoryId](statsStore.for(currentCategoryId).streak);
+  function show(problem: Problem) {
+    currentProblem = problem;
     solved = false;
     feedback = null;
+  }
+
+  function newProblem() {
+    show(generators[currentCategoryId](statsStore.for(currentCategoryId).streak));
+  }
+
+  /** Continues a multi-step exercise on the same circuit, or starts a fresh one. */
+  function nextProblem() {
+    if (currentProblem.next) show(currentProblem.next);
+    else newProblem();
   }
 
   function selectCategory(id: CategoryId) {
@@ -70,7 +81,7 @@
 <div class="app">
   <AppHeader {view} onNavigate={(v) => (view = v)} onResetStats={resetProgress} />
 
-  {#if view !== 'exam'}
+  {#if view === 'practice' || view === 'theory'}
     <CategoryTabs categories={CATEGORIES} activeId={currentCategoryId} onSelect={selectCategory} />
     <LawLegend />
   {/if}
@@ -78,18 +89,22 @@
   {#if view === 'practice'}
     <main class="layout">
       <CircuitCard problem={currentProblem} />
-      <QuestionCard problem={currentProblem} {solved} {feedback} onCheck={checkAnswer} onNext={newProblem} />
+      <QuestionCard problem={currentProblem} {solved} {feedback} onCheck={checkAnswer} onNext={nextProblem} />
     </main>
   {:else if view === 'theory'}
     <TheoryView />
   {/if}
 
-  <!-- Kept mounted so filled-in answers survive a quick look at the theory. -->
+  <!-- Kept mounted so filled-in answers and tweaked values survive a quick look elsewhere. -->
+  <div hidden={view !== 'lab'}>
+    <LabView />
+  </div>
+
   <div hidden={view !== 'exam'}>
     <ExamView />
   </div>
 
-  <Scratchpad />
+  <Scratchpad circuit={view === 'practice' ? currentProblem.circuit : null} accent={currentProblem.accent} />
 
   {#if view === 'practice'}
     <AppFooter />

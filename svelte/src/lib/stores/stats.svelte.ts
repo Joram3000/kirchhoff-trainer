@@ -50,6 +50,10 @@ function createStatsStore() {
       }
       persist();
     },
+    setMarkedMastered(id: CategoryId, marked: boolean) {
+      byCategory[id].markedMastered = marked;
+      persist();
+    },
     resetAll() {
       for (const c of CATEGORIES) byCategory[c.id] = emptyStats();
       persist();
